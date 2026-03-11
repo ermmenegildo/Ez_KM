@@ -1,0 +1,365 @@
+/* --- CONFIGURACIÓN DE NÚCLEO --- */
+:root {
+    --neon-green: #1fff1f;
+    --neon-green-glow: rgba(31, 255, 31, 0.7);
+    --neon-blue: #5555ff;
+    --neon-red: #ff3131;
+    --dark-bg: #020502;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+* { 
+    box-sizing: border-box; 
+    font-family: 'VT323', monospace;
+}
+
+body {
+    background-color: #000;
+    color: var(--neon-green);
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background: radial-gradient(circle, #1a1a1a 0%, #000 80%);
+}
+
+/* --- CONTENEDOR MONITOR CRT --- */
+#monitor {
+    width: 95vw;
+    height: 92vh;
+    background: var(--dark-bg);
+    border: 30px solid #1a1a1a;
+    border-radius: 80px;
+    position: relative;
+    box-shadow: 
+        inset 0 0 100px #000, 
+        0 0 50px rgba(0,0,0,1),
+        0 0 20px rgba(31, 255, 31, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: perspective(1000px) rotateX(2deg);
+}
+
+/* Reflejo de cristal */
+#monitor::after {
+    content: " ";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.05) 100%);
+    pointer-events: none;
+    z-index: 20;
+}
+
+.scanlines {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    background-size: 100% 3px, 3px 100%;
+    z-index: 15;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.screen {
+    padding: 40px;
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    animation: flicker 0.08s infinite;
+    text-shadow: 0 0 8px var(--neon-green-glow);
+    z-index: 5;
+    position: relative;
+    mask-image: radial-gradient(circle, black 70%, transparent 100%);
+}
+
+/* --- BOTONES Y ENLACES (FIX VERDE) --- */
+a, button, .btn-nav, .btn-menu {
+    color: var(--neon-green) !important;
+    text-decoration: none;
+    border: 1px solid var(--neon-green);
+    background: rgba(31, 255, 31, 0.05);
+    padding: 5px 15px;
+    display: inline-block;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    box-shadow: 0 0 5px var(--neon-green-glow);
+}
+
+a:hover, button:hover {
+    background: var(--neon-green) !important;
+    color: #000 !important;
+    box-shadow: 0 0 20px var(--neon-green);
+}
+
+/* --- BOTONES DE MOVIMIENTO (CUADRADOS) --- */
+/* Esta regla busca los links de dirección N, S, E, O */
+.controls a, a[href*="/mover/"] {
+    width: 45px;
+    height: 45px;
+    line-height: 45px;
+    text-align: center;
+    padding: 0;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 5px;
+}
+
+/* --- FORMULARIOS (SELECT E INPUT) --- */
+input[type="text"], select {
+    background: #000;
+    border: 1px solid var(--neon-green);
+    color: var(--neon-green);
+    font-size: 1.2rem;
+    padding: 5px 10px;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    border-radius: 0;
+}
+
+select {
+    padding-right: 30px;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%231fff1f%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px top 50%;
+    background-size: 12px auto;
+}
+
+option { background: #000; color: var(--neon-green); }
+
+/* --- TABLAS --- */
+.class-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.class-table th {
+    text-align: left;
+    border-bottom: 1px solid var(--neon-green);
+    color: var(--neon-green);
+    opacity: 0.8;
+}
+
+.class-table td { padding: 8px 0; }
+.highlight { color: #fff; text-shadow: 0 0 10px var(--neon-green); }
+
+/* --- ANIMACIONES --- */
+@keyframes flicker {
+    0% { opacity: 0.95; }
+    50% { opacity: 1; }
+    100% { opacity: 0.98; }
+}
+
+/* --- FOOTER Y OTROS --- */
+.sys-info { font-size: 0.8rem; opacity: 0.5; margin-top: 20px; }
+.blue-text { color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); }
+
+/* --- ESTILOS DEL SIDEBAR Y MAPA --- */
+.sidebar-section {
+    margin-bottom: 25px;
+    border: 1px solid rgba(31, 255, 31, 0.1);
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.mini-map {
+    font-family: monospace;
+    line-height: 8px;
+    letter-spacing: 4px;
+    text-align: center;
+    background: #050805;
+    padding: 10px;
+    border: 1px solid var(--neon-green-glow);
+    margin: 10px 0;
+}
+
+.map-pixel { color: rgba(31, 255, 31, 0.2); }
+
+.player-pos { 
+    color: var(--neon-green); 
+    font-weight: bold; 
+    text-shadow: 0 0 10px var(--neon-green);
+}
+
+.is-center { color: var(--neon-blue); }
+
+.stat-bar {
+    width: 100%;
+    height: 6px;
+    background: #111;
+    border: 1px solid var(--neon-green);
+    margin: 5px 0;
+}
+
+.bar-fill {
+    height: 100%;
+    background: var(--neon-green);
+    box-shadow: 0 0 10px var(--neon-green);
+}
+
+.wound-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+}
+/* Contenedor principal para dividir en dos columnas */
+.game-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    align-items: flex-start;
+}
+
+/* Columna de la izquierda (Acción) */
+.main-view {
+    flex: 2; /* Ocupa el 60-70% */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Columna de la derecha (Sidebar) */
+.status-sidebar {
+    flex: 1; /* Ocupa el 30% restante */
+    min-width: 300px;
+    border-left: 1px solid var(--neon-green-glow);
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Ajuste del mapa para que no se deforme */
+.mini-map {
+    font-family: monospace;
+    line-height: 10px;
+    letter-spacing: 2px;
+    background: rgba(0, 20, 0, 0.5);
+    padding: 15px;
+    border: 1px solid #1f7a1f;
+    text-align: center;
+}
+
+/* Responsive: si la pantalla es pequeña, se pone uno debajo de otro */
+@media (max-width: 800px) {
+    .game-layout { flex-direction: column; }
+    .status-sidebar { border-left: none; border-top: 1px solid var(--neon-green-glow); padding-top: 20px; }
+}
+
+.mini-map-container {
+    position: relative;
+    overflow: hidden; /* Corta la línea de escaneo para que no salga del mapa */
+    border: 1px solid var(--neon-green-glow);
+}
+
+.scan-line {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: rgba(31, 255, 31, 0.5);
+    box-shadow: 0 0 10px var(--neon-green);
+    animation: scan 3s linear infinite;
+    z-index: 5;
+}
+
+@keyframes scan {
+    0% { top: 0; }
+    100% { top: 100%; }
+}
+
+.map-pixel.player-pos {
+    color: var(--neon-green);
+    text-shadow: 0 0 8px var(--neon-green);
+    font-weight: bold;
+}
+/* BRÚJULA */
+.compass-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.compass {
+    display: grid;
+    grid-template-areas: 
+        ". n ."
+        "o c e"
+        ". s .";
+    gap: 15px;
+    align-items: center;
+}
+
+.north { grid-area: n; }
+.south { grid-area: s; }
+.east { grid-area: e; }
+.west { grid-area: o; }
+.nav-center { 
+    grid-area: c; 
+    padding: 10px;
+    border: 1px solid var(--neon-blue);
+    color: var(--neon-blue);
+    font-family: 'Courier New', monospace;
+}
+
+/* PUNTOS ROJOS Y MAPA */
+.map-pixel.is-enemy {
+    color: #ff0000;
+    text-shadow: 0 0 5px #ff0000;
+}
+
+.map-pixel.player-pos {
+    color: #00ff00;
+    font-weight: bold;
+}
+
+.map-pixel.is-center {
+    color: #0088ff;
+}
+
+.inventory-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+}
+
+.inventory-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(31, 255, 31, 0.05);
+    margin-bottom: 5px;
+    padding: 5px 8px;
+    border: 1px solid rgba(31, 255, 31, 0.2);
+    font-size: 0.9rem;
+}
+
+.btn-use {
+    color: var(--neon-green);
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.8rem;
+    padding: 2px 5px;
+    border: 1px solid var(--neon-green);
+}
+
+.btn-use:hover {
+    background: var(--neon-green);
+    color: black;
+}
+
+/* Mejora para los puntos rojos de radiación en el mapa */
+.map-pixel.is-enemy {
+    color: #ff3333 !important;
+    text-shadow: 0 0 8px #ff0000;
+}

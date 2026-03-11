@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="{{ session.lang|default('es') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t.titulo|default('ZOMBIE TERMINAL') }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧟</text></svg>">
+</head>
+<body>
+
+    <div id="monitor">
+        
+        <div class="scanlines"></div>
+
+        <div class="screen">
+            
+            {% block content %}{% endblock %}
+
+        </div>
+
+        <div class="glass-reflection"></div>
+    </div>
+
+    <style>
+        .glass-reflection {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                135deg, 
+                rgba(255,255,255,0.03) 0%, 
+                rgba(255,255,255,0) 50%, 
+                rgba(255,255,255,0.02) 100%
+            );
+            pointer-events: none;
+            z-index: 15;
+        }
+    </style>
+
+</body>
+</html>

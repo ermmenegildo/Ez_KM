@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="skills-container">
+    <header class="hud-header">
+        <h1 class="glitch-title" data-text="MEJORA DE APTITUDES">// UPGRADE_TREE.EXE</h1>
+        <div class="sp-display">
+            <span class="label">PUNTOS DE HABILIDAD (SP):</span>
+            <span class="value blink-green">{{ p.sp }}</span>
+        </div>
+    </header>
+
+    <div class="skills-grid">
+        {% for id, info in habs.items() %}
+        <div class="skill-card {{ 'learned' if id in p.skills else 'locked' }}">
+            <div class="skill-header">
+                <span class="skill-icon">
+                    {% if id == 'agricultura' %}🌱{% elif id == 'fuerza' %}💪{% elif id == 'carroñero' %}💰{% else %}🧬{% endif %}
+                </span>
+                <h3>{{ info.nombre }}</h3>
+            </div>
+            
+            <p class="skill-desc">{{ info.desc }}</p>
+
+            <div class="skill-action">
+                {% if id in p.skills %}
+                    <span class="status-active">[ HABILIDAD ADQUIRIDA ]</span>
+                {% elif p.sp >= info.coste %}
+                    <a href="/habilidades/aprender/{{ id }}" class="btn-upgrade">
+                        [ APRENDER - {{ info.coste }} SP ]
+                    </a>
+                {% else %}
+                    <span class="status-disabled">[ NECESITAS {{ info.coste }} SP ]</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="skill-footer">
+        <p class="sys-note">>> ELIGE BIEN: LAS MODIFICACIONES GENÉTICAS SON PERMANENTES.</p>
+        <a href="/juego" class="btn-execute">[ << VOLVER AL PANEL DE CONTROL ]</a>
+    </div>
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<div class="leaderboard-container">
+    <header class="terminal-header">
+        <h1 class="glitch-title">{{ t.ranking }}</h1>
+        <p class="blink-text">>> ACCEDIENDO A REGISTROS HISTÓRICOS...</p>
+    </header>
+
+    <div class="data-terminal ranking-box">
+        <table class="class-table">
+            <thead>
+                <tr>
+                    <th>POS</th>
+                    <th>{{ t.nombre }}</th>
+                    <th>{{ t.dias }}</th>
+                    <th>{{ t.reintentar }}</th> </tr>
+            </thead>
+            <tbody>
+                {% for entrada in top %}
+                <tr>
+                    <td>#{{ loop.index }}</td>
+                    <td class="highlight">{{ entrada.nombre }}</td>
+                    <td>{{ entrada.dias }}</td>
+                    <td>{{ entrada.puntos }} PTS</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; opacity: 0.5;">-- NO HAY REGISTROS DISPONIBLES --</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <footer class="index-footer">
+        <a href="/" class="btn-execute" style="text-decoration: none; font-size: 1.5rem;">
+            [ << {{ t.reintentar }} ]
+        </a>
+    </footer>
+</div>
+
+{% endblock %}

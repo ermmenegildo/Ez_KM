@@ -1,0 +1,133 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="game-layout">
+    
+    <div class="main-view">
+        <header class="hud-header">
+            <div class="hud-box">
+                <span class="label">LVL:</span> <span class="value">{{ p.lvl }}</span>
+                <span class="label">EXP:</span> <span class="value">{{ p.exp }}/100</span>
+            </div>
+            <div class="hud-box center">
+                <div class="district">// {{ distrito }}</div>
+                <div class="time-status {{ 'blink-red' if es_noche }}">{{ 'NOCHE_CRÍTICA' if es_noche else 'DÍA_ESTABLE' }}</div>
+            </div>
+            <div class="hud-box right">
+                <span class="label">CRÉDITOS:</span> <span class="value">{{ p.dinero }} CC</span>
+            </div>
+        </header>
+
+        <div class="terminal">
+            <p class="log-text">> {{ p.log }}</p>
+            {% if p.hambre < 20 %}<p class="log-text alert">!! ADVERTENCIA: NUTRICIÓN CRÍTICA !!</p>{% endif %}
+        </div>
+
+        <main class="action-viewport">
+            {% if p.enemigo %}
+                <div class="event-card combat">
+                    <h2 class="blink-red">¡CONTACTO ENEMIGO!</h2>
+                    <div class="target-info">{{ p.enemigo.nombre }} [HP: {{ p.enemigo.hp }}]</div>
+                    <a href="/atacar" class="btn-confirm">[ EJECUTAR ATAQUE ]</a>
+                </div>
+            {% elif p.mercader %}
+                <div class="event-card trade">
+                    <h2>MERCADER AMBULANTE</h2>
+                    <p>OFERTA: {{ p.mercader.oferta }} ({{ p.mercader.items[p.mercader.oferta] }} CC)</p>
+                    <div class="trade-actions">
+                        <a href="/comprar" class="btn-confirm">[ COMPRAR ]</a>
+                        <a href="/ignorar_mercader" class="btn-nav">[ IGNORAR ]</a>
+                    </div>
+                </div>
+            {% else %}
+                <div class="compass-container">
+                    <div class="compass">
+                        <a href="/mover/n" class="nav-btn north">N</a>
+                        <a href="/mover/o" class="nav-btn west">O</a>
+                        <div class="nav-center">
+                            <span class="coords-display">{{ p.x }} : {{ p.y }}</span>
+                        </div>
+                        <a href="/mover/e" class="nav-btn east">E</a>
+                        <a href="/mover/s" class="nav-btn south">S</a>
+                    </div>
+                </div>
+            {% endif %}
+        </main>
+
+        <nav class="special-actions">
+            <a href="/habilidades" class="btn-menu">HABILIDADES</a>
+            {% if p.estados %}
+                <a href="/curar_herida" class="btn-menu wound-critical">TRATAR TRAUMA</a>
+            {% endif %}
+            <a href="/dormir" class="btn-menu {{ 'disabled' if es_noche and not en_refugio }}">DORMIR</a>
+        </nav>
+    </div>
+
+    <aside class="status-sidebar">
+        <div class="sidebar-section">
+            <h3>RADAR TÁCTICO</h3>
+            <div class="mini-map-container">
+                <div class="scan-line"></div>
+                <div class="mini-map">
+                    {% for row in range(p.y + 4, p.y - 5, -1) %}
+                    <div class="map-row">
+                        {% for col in range(p.x - 5, p.x + 6) %}
+                            {% set dist = (col**2 + row**2)**0.5 %}
+                            <span class="map-pixel 
+                                {{ 'player-pos' if p.x == col and p.y == row else '' }}
+                                {{ 'is-enemy' if dist > 80 else '' }} 
+                                {{ 'is-center' if col == 0 and row == 0 else '' }}">
+                                {{ '■' if p.x == col and p.y == row else '·' }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <p class="map-info">ZONAS <span style="color:#ff3333">ROJAS</span>: RADIACIÓN ALTA</p>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>MOCHILA / SUMINISTROS</h3>
+            <div class="inventory-container">
+                {% if not p.inventario %}
+                    <p class="empty-msg">> SIN OBJETOS</p>
+                {% else %}
+                    <ul class="inventory-list">
+                        {% for item in p.inventario %}
+                            <li class="inventory-item">
+                                <span>{{ item }}</span>
+                                <a href="/usar/{{ loop.index0 }}" class="btn-use">[USAR]</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                <div class="inv-slots">SLOTS: {{ p.inventario|length }}/{{ p.max_inventario }}</div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>ESTADO DEL SUJETO</h3>
+            <div class="bar-group">
+                <div class="bar-label">VITALIDAD: {{ p.hp }} / {{ p.max_hp }}</div>
+                <div class="bar-bg"><div class="bar-fill hp" style="width: {{ (p.hp/p.max_hp)*100 }}%"></div></div>
+            </div>
+            <div class="bar-group">
+                <div class="bar-label">NUTRICIÓN: {{ p.hambre }}%</div>
+                <div class="bar-bg"><div class="bar-fill hunger" style="width: {{ p.hambre }}%"></div></div>
+            </div>
+            
+            <ul class="wound-list">
+                {% if not p.estados %}
+                    <li class="status-ok">> BIO-DATA ESTABLE</li>
+                {% else %}
+                    {% for e in p.estados %}
+                        <li class="wound-critical">> {{ e|upper }}</li>
+                    {% endfor %}
+                {% endif %}
+            </ul>
+        </div>
+    </aside>
+
+</div>
+{% endblock %}

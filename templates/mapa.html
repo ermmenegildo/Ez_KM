@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="map-container {{ 'mode-night' if es_noche else 'mode-day' }}">
+    <header class="hud-header">
+        <div class="glitch-title" data-text="LOCALIZADOR URBANO">// GPS_CITY_MAP</div>
+        <div class="status-indicator">
+            {% if es_noche %}
+            <span class="blink-red">● ESTADO: NOCHE (PELIGRO CRÍTICO)</span>
+            {% else %}
+            <span class="text-green">● ESTADO: DÍA (EXPLORACIÓN)</span>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="district-banner">
+        <h2>{{ distrito }}</h2>
+        <p>COORDENADAS ACTUALES: [X: {{ p.x }} | Y: {{ p.y }}]</p>
+    </div>
+
+    <div class="radar-viewport">
+        <div class="grid-overlay"></div>
+        <div class="radar-circle">
+            <div class="sweep"></div>
+            
+            <div class="marker you">
+                <div class="icon">▲</div>
+                <div class="label">USTED</div>
+            </div>
+
+            {% set scale = 2 %}
+            {% set off_x = (rx - p.x) * scale %}
+            {% set off_y = (ry - p.y) * scale %}
+            
+            <div class="marker shelter" style="margin-left: {{ off_x }}px; margin-top: {{ -off_y }}px;">
+                <div class="icon-shelter">⌂</div>
+                <div class="label">REFUGIO</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="data-grid">
+        <div class="data-card">
+            <span class="label">REFUGIO MÁS CERCANO:</span>
+            <span class="value">X:{{ rx }} Y:{{ ry }}</span>
+        </div>
+        <div class="data-card">
+            <span class="label">DISTANCIA AL BÚNKER:</span>
+            <span class="value blink">{{ dist_refugio }}m</span>
+        </div>
+        <div class="data-card">
+            <span class="label">TIEMPO PARA CAMBIO:</span>
+            <span class="value">
+                {% if es_noche %}
+                {{ 180 - p.ciclo_pasos }} PASOS PARA AMANECER
+                {% else %}
+                {{ 100 - p.ciclo_pasos }} PASOS PARA OSCURECER
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    <footer class="map-footer">
+        <a href="/juego" class="btn-execute">[ VOLVER AL PANEL DE ACCIÓN ]</a>
+    </footer>
+</div>
+
+
+
+{% endblock %}
