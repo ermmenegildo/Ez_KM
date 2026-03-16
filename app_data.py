@@ -1,165 +1,126 @@
 # -*- coding: utf-8 -*-
 
 CLASES = {
-    'Policía':         {'hp': 110, 'item': 'Pistola 9mm',  'desc': 'Arma de fuego inicial. Alta cadencia.'},
-    'Médico':          {'hp': 100, 'item': 'Botiquín',      'desc': 'Curación avanzada. Sana más HP.'},
-    'Militar':         {'hp': 130, 'item': 'Cuchillo',      'desc': 'Combate cuerpo a cuerpo experto.'},
-    'Leñador':         {'hp': 140, 'item': 'Hacha',         'desc': 'Máxima resistencia física.'},
-    'Vagabundo':       {'hp': 90,  'item': 'Lata de comida','desc': 'Conoce los callejones. +Sigilo.'},
-    'Artista Marcial': {'hp': 120, 'item': 'Vendas',        'desc': 'Cuerpo como arma. Alta evasión.'},
-    'Catedrático':     {'hp': 80,  'item': 'Mapa',          'desc': 'Conocimiento táctico. +XP global.'},
-    'Agricultor':      {'hp': 115, 'item': 'Azada',         'desc': 'Supervivencia rural. Cultiva rápido.'}
+    'Policia':        {'hp':110,'item':'Pistola 9mm',    'bono':'Acceso a furgones policiales.'},
+    'Medico':         {'hp':100,'item':'Botiquin',        'bono':'+30% efectividad curativos.'},
+    'Militar':        {'hp':130,'item':'Cuchillo',        'bono':'Empieza con municion extra.'},
+    'Lenador':        {'hp':140,'item':'Hacha',           'bono':'Armas cuerpo a cuerpo duran +50%.'},
+    'Vagabundo':      {'hp': 90,'item':'Lata de comida',  'bono':'Encuentra objetos ocultos.'},
+    'Artista Marcial':{'hp':120,'item':'Vendas',          'bono':'Puños infligen 15 de daño.'},
+    'Catedratico':    {'hp': 80,'item':'Mapa',            'bono':'+15% XP en todas las acciones.'},
+    'Agricultor':     {'hp':115,'item':'Azada',           'bono':'Cosechas rinden el doble.'},
+    'Policia':        {'hp':110,'item':'Pistola 9mm',    'bono':'Acceso a furgones policiales.'},
+    'Policía':        {'hp':110,'item':'Pistola 9mm',    'bono':'Acceso a furgones policiales.'},
+    'Médico':         {'hp':100,'item':'Botiquin',        'bono':'+30% efectividad curativos.'},
+    'Leñador':        {'hp':140,'item':'Hacha',           'bono':'Armas cuerpo a cuerpo duran +50%.'},
+    'Catedrático':    {'hp': 80,'item':'Mapa',            'bono':'+15% XP en todas las acciones.'},
+}
+
+CARGADOR = {
+    'Pistola 9mm':12,'Ebony & Ivory':24,'Rifle':8,'Winchester 1866':6,
+    'Rifle Modificado':10,'Escopeta':6,'Ballesta':1,
+}
+
+TIPOS_MUNICION = {
+    'Balas 9mm':   {'armas':['Pistola 9mm','Ebony & Ivory'],'paquete':12},
+    'Balas Rifle': {'armas':['Rifle','Winchester 1866','Rifle Modificado'],'paquete':8},
+    'Cartuchos':   {'armas':['Escopeta'],'paquete':6},
+    'Flechas':     {'armas':['Ballesta'],'paquete':10},
 }
 
 OBJETOS = {
-    'Pistola 9mm':    {'tipo': 'arma',   'dmg': 40, 'slot': 'mano_der'},
-    'Rifle':          {'tipo': 'arma',   'dmg': 55, 'slot': 'mano_der'},
-    'Escopeta':       {'tipo': 'arma',   'dmg': 70, 'slot': 'mano_der'},
-    'Hacha':          {'tipo': 'arma',   'dmg': 25, 'slot': 'mano_der'},
-    'Cuchillo':       {'tipo': 'arma',   'dmg': 15, 'slot': 'mano_der'},
-    'Katana':         {'tipo': 'arma',   'dmg': 35, 'slot': 'mano_der'},
-    'Machete':        {'tipo': 'arma',   'dmg': 28, 'slot': 'mano_der'},
-    'Bate de béisbol':{'tipo': 'arma',   'dmg': 20, 'slot': 'mano_der'},
-    'Lanza artesanal':{'tipo': 'arma',   'dmg': 22, 'slot': 'mano_der'},
-    'Exoesqueleto':   {'tipo': 'equipo', 'defensa': 15, 'evasion': 0.25, 'slot': 'torso'},
-    'Chaleco':        {'tipo': 'equipo', 'defensa': 10, 'evasion': 0.05, 'slot': 'torso'},
-    'Armadura Placas':{'tipo': 'equipo', 'defensa': 20, 'evasion': 0.0,  'slot': 'torso'},
-    'Casco Militar':  {'tipo': 'equipo', 'defensa': 8,  'evasion': 0.02, 'slot': 'cabeza'},
-    'Gafas Tácticas': {'tipo': 'equipo', 'defensa': 2,  'evasion': 0.10, 'slot': 'cabeza'},
-    'Botas Tácticas': {'tipo': 'equipo', 'defensa': 4,  'evasion': 0.08, 'slot': 'pies'},
-    'Rodilleras':     {'tipo': 'equipo', 'defensa': 3,  'evasion': 0.05, 'slot': 'pies'},
-    'Mochila Grande': {'tipo': 'util',   'efecto': 'inventario+3', 'slot': 'espalda'},
-    'Mochila Táctica':{'tipo': 'util',   'efecto': 'inventario+5', 'slot': 'espalda'},
+    'Pistola 9mm':      {'tipo':'arma','dmg':40,'slot':'mano_der','ammo_type':'Balas 9mm',  'dur':None,'special':None},
+    'Rifle':            {'tipo':'arma','dmg':55,'slot':'mano_der','ammo_type':'Balas Rifle', 'dur':None,'special':None},
+    'Escopeta':         {'tipo':'arma','dmg':70,'slot':'mano_der','ammo_type':'Cartuchos',  'dur':None,'special':None},
+    'Ballesta':         {'tipo':'arma','dmg':45,'slot':'mano_der','ammo_type':'Flechas',    'dur':None,'special':None},
+    'Hacha':            {'tipo':'arma','dmg':25,'slot':'mano_der','ammo_type':None,'dur':40,'special':None},
+    'Cuchillo':         {'tipo':'arma','dmg':15,'slot':'mano_der','ammo_type':None,'dur':30,'special':None},
+    'Cuchillo de cocina':{'tipo':'arma','dmg':12,'slot':'mano_der','ammo_type':None,'dur':20,'special':None},
+    'Katana':           {'tipo':'arma','dmg':35,'slot':'mano_der','ammo_type':None,'dur':50,'special':'sangrado'},
+    'Machete':          {'tipo':'arma','dmg':28,'slot':'mano_der','ammo_type':None,'dur':35,'special':None},
+    'Bate de beisbol':  {'tipo':'arma','dmg':20,'slot':'mano_der','ammo_type':None,'dur':25,'special':None},
+    'Lanza artesanal':  {'tipo':'arma','dmg':22,'slot':'mano_der','ammo_type':None,'dur':15,'special':None},
+    'Tuberia':          {'tipo':'arma','dmg':18,'slot':'mano_der','ammo_type':None,'dur':30,'special':None},
+    'Azada':            {'tipo':'arma','dmg':16,'slot':'mano_der','ammo_type':None,'dur':20,'special':None},
+    'Achuela':          {'tipo':'arma','dmg':22,'slot':'mano_der','ammo_type':None,'dur':35,'special':None},
+    'Rifle Modificado': {'tipo':'arma','dmg':70,'slot':'mano_der','ammo_type':'Balas Rifle','dur':None,'special':None},
+    # ARMAS ESPECIALES
+    'Ebony & Ivory':    {'tipo':'arma','dmg':65,'slot':'mano_der','ammo_type':'Balas 9mm','dur':None,'special':'doble_disparo',
+                         'lore':'Pistolas akimbo de Dante. Oficina Distrito Financiero.','raro':True},
+    'Espada Crisol':    {'tipo':'arma','dmg':80,'slot':'mano_der','ammo_type':None,'dur':None,'special':'quemado',
+                         'lore':'Arma del Doom Slayer. Incinera zombis nucleares.','raro':True},
+    'Espada de Blade':  {'tipo':'arma','dmg':75,'slot':'mano_der','ammo_type':None,'dur':None,'special':'vampirismo',
+                         'lore':'Espada del cazavampiros. Cura HP al matar.','raro':True},
+    'Espada del Brujo': {'tipo':'arma','dmg':60,'slot':'mano_der','ammo_type':None,'dur':None,'special':'confusion',
+                         'lore':'Tienda de la pitonisa en el Cementerio.','raro':True},
+    'Excalibur':        {'tipo':'arma','dmg':70,'slot':'mano_der','ammo_type':None,'dur':None,'special':'aturdir',
+                         'lore':'La espada legendaria. Museo del Centro Urbano.','raro':True},
+    'Winchester 1866':  {'tipo':'arma','dmg':52,'slot':'mano_der','ammo_type':'Balas Rifle','dur':None,'special':None,
+                         'lore':'Rifle del Oeste. Museo de historia.','raro':True},
+    'Katana de Musashi':{'tipo':'arma','dmg':68,'slot':'mano_der','ammo_type':None,'dur':None,'special':'sangrado',
+                         'lore':'La katana del espadachin legendario. Museo de arte.','raro':True},
+    # ARMADURAS
+    'Exoesqueleto':          {'tipo':'equipo','defensa':15,'evasion':0.25,'slot':'torso','dur':None},
+    'Chaleco Antibalas':     {'tipo':'equipo','defensa':10,'evasion':0.05,'slot':'torso','dur':None},
+    'Chaleco':               {'tipo':'equipo','defensa':10,'evasion':0.05,'slot':'torso','dur':None},
+    'Armadura Placas':       {'tipo':'equipo','defensa':20,'evasion':0.00,'slot':'torso','dur':None},
+    'Armadura de Estatua':   {'tipo':'equipo','defensa':25,'evasion':0.00,'slot':'torso','dur':80,'lore':'Museo.'},
+    'Armadura de Mansion':   {'tipo':'equipo','defensa':22,'evasion':0.05,'slot':'torso','dur':None},
+    'Chaqueta de Motorista': {'tipo':'equipo','defensa':8, 'evasion':0.12,'slot':'torso','dur':None,'mordida_prot':0.4},
+    'Armadura Improvisada':  {'tipo':'equipo','defensa':6, 'evasion':0.08,'slot':'torso','dur':20,'mordida_prot':0.6},
+    'Casco Militar':         {'tipo':'equipo','defensa':8, 'evasion':0.02,'slot':'cabeza','dur':None},
+    'Casco Improvisado':     {'tipo':'equipo','defensa':4, 'evasion':0.05,'slot':'cabeza','dur':15},
+    'Gafas Tacticas':        {'tipo':'equipo','defensa':2, 'evasion':0.10,'slot':'cabeza','dur':None},
+    'Botas Tacticas':        {'tipo':'equipo','defensa':4, 'evasion':0.08,'slot':'pies','dur':None},
+    'Rodilleras':            {'tipo':'equipo','defensa':3, 'evasion':0.05,'slot':'pies','dur':None},
+    'Mochila Grande':        {'tipo':'util','efecto':'inventario+3','slot':'espalda','dur':None},
+    'Mochila Tactica':       {'tipo':'util','efecto':'inventario+5','slot':'espalda','dur':None},
+    'Pieza de Motor':        {'tipo':'material'},
+    'Combustible Marino':    {'tipo':'material'},
+    'Radio':                 {'tipo':'util'},
+    'Gasolina':              {'tipo':'material'},
 }
 
 ITEMS_CURATIVOS = {
-    'Botiquín':         {'hp': 50,  'hambre': 0},
-    'Venda':            {'hp': 20,  'hambre': 0},
-    'Lata de comida':   {'hp': 5,   'hambre': 20},
-    'Ración Energética':{'hp': 10,  'hambre': 35},
-    'Agua Purificada':  {'hp': 15,  'hambre': 15},
-    'Antibióticos':     {'hp': 30,  'hambre': 0,  'cura_estado': 'infectado'},
-    'Yoduro de potasio':{'hp': 0,   'hambre': 0,  'cura_estado': 'irradiado'},
-    'Morfina':          {'hp': 60,  'hambre': 0},
-    'Azada':            {'hp': 0,   'hambre': 0},
-    'Vendas':           {'hp': 15,  'hambre': 0},
-    'Mapa':             {'hp': 0,   'hambre': 0},
+    'Botiquin':            {'hp':50, 'hambre':0},
+    'Venda':               {'hp':20, 'hambre':0},
+    'Vendas':              {'hp':15, 'hambre':0},
+    'Lata de comida':      {'hp':5,  'hambre':20},
+    'Racion Energetica':   {'hp':10, 'hambre':35},
+    'Agua Purificada':     {'hp':15, 'hambre':15},
+    'Antibioticos':        {'hp':30, 'hambre':0,  'cura':'bacteriana'},
+    'Morfina':             {'hp':60, 'hambre':0},
+    'Carbon Activado':     {'hp':10, 'hambre':0,  'cura':'intoxicacion'},
+    'Vial de Retencion':   {'hp':0,  'hambre':0,  'especial':'vial'},
+    'Comida Cocinada':     {'hp':25, 'hambre':50},
+    'Sopa de Campamento':  {'hp':35, 'hambre':60},
+    'Carne de Cadaver':    {'hp':20, 'hambre':40, 'riesgo':0.6},
+    'Azada':               {'hp':0,  'hambre':0},
+    'Vendas':              {'hp':15, 'hambre':0},
+    'Mapa':                {'hp':0,  'hambre':0},
 }
 
-# Recetas de crafteo al estilo Dying Light
-# ingredientes: lista de (nombre_item, cantidad)
-RECETAS_CRAFTEO = {
-    'Cóctel Molotov': {
-        'ingredientes': [('Gasolina', 1), ('Trapo', 1), ('Botella vacía', 1)],
-        'resultado': {'tipo': 'arma_arrojadiza', 'dmg': 80},
-        'desc': 'Bomba incendiaria artesanal. Daño masivo en área.',
-        'xp_craft': 15,
-    },
-    'Venda': {
-        'ingredientes': [('Trapo', 2), ('Alcohol', 1)],
-        'resultado': {'tipo': 'curativo', 'hp': 20},
-        'desc': 'Cura básica de trauma.',
-        'xp_craft': 5,
-    },
-    'Botiquín Mejorado': {
-        'ingredientes': [('Botiquín', 1), ('Antibióticos', 1), ('Morfina', 1)],
-        'resultado': {'tipo': 'curativo', 'hp': 100},
-        'desc': 'Cura completa. Elimina estados negativos.',
-        'xp_craft': 25,
-    },
-    'Lanza artesanal': {
-        'ingredientes': [('Palo', 2), ('Cuchillo', 1), ('Cuerda', 1)],
-        'resultado': {'tipo': 'arma', 'dmg': 22, 'slot': 'mano_der'},
-        'desc': 'Arma cuerpo a cuerpo de largo alcance.',
-        'xp_craft': 20,
-    },
-    'Machete': {
-        'ingredientes': [('Chatarra metálica', 2), ('Cuerda', 1)],
-        'resultado': {'tipo': 'arma', 'dmg': 28, 'slot': 'mano_der'},
-        'desc': 'Hoja improvisada. Corta bien, dura poco.',
-        'xp_craft': 18,
-    },
-    'Trampa Explosiva': {
-        'ingredientes': [('Pólvora', 2), ('Cable', 1), ('Lata vacía', 1)],
-        'resultado': {'tipo': 'trampa', 'dmg': 120},
-        'desc': 'Trampa en el suelo. Daño masivo al primer zombi.',
-        'xp_craft': 30,
-    },
-    'Chaleco': {
-        'ingredientes': [('Chatarra metálica', 3), ('Cuerda', 2)],
-        'resultado': {'tipo': 'equipo', 'defensa': 10, 'evasion': 0.05, 'slot': 'torso'},
-        'desc': 'Protección torácica básica.',
-        'xp_craft': 22,
-    },
-    'Ración Energética': {
-        'ingredientes': [('Lata de comida', 1), ('Azúcar', 1)],
-        'resultado': {'tipo': 'curativo', 'hp': 10, 'hambre': 35},
-        'desc': 'Comida reforzada. Sacia hambre y cura algo.',
-        'xp_craft': 8,
-    },
-    'Agua Purificada': {
-        'ingredientes': [('Agua sucia', 2), ('Pastilla potabilizadora', 1)],
-        'resultado': {'tipo': 'curativo', 'hp': 15, 'hambre': 15},
-        'desc': 'Agua segura para beber.',
-        'xp_craft': 6,
-    },
-    'Rifle Modificado': {
-        'ingredientes': [('Rifle', 1), ('Chatarra metálica', 1), ('Cuerda', 1)],
-        'resultado': {'tipo': 'arma', 'dmg': 70, 'slot': 'mano_der'},
-        'desc': 'Rifle con mejoras de campo. Más preciso.',
-        'xp_craft': 35,
-    },
+RECETAS_BASE = {
+    'Venda':             {'ingredientes':[('Trapo',2),('Alcohol',1)],'xp':5,'desc':'Cura básica.'},
+    'Coctel Molotov':    {'ingredientes':[('Gasolina',1),('Trapo',1),('Botella vacia',1)],'xp':15,'desc':'Bomba incendiaria.'},
+    'Armadura Improvisada':{'ingredientes':[('Trapo',3),('Cuerda',2),('Cinta americana',2)],'xp':20,'desc':'Protege de mordidas.'},
+    'Lanza artesanal':   {'ingredientes':[('Palo',2),('Cuchillo',1),('Cuerda',1)],'xp':18,'desc':'Arma improvisada.'},
+    'Radio':             {'ingredientes':[('Chatarra metalica',2),('Cable',3),('Pila',1)],'xp':30,'desc':'Para torre de radio.'},
+    'Casco Improvisado': {'ingredientes':[('Chatarra metalica',2),('Cuerda',1)],'xp':15,'desc':'Protección básica.'},
+    'Racion Energetica': {'ingredientes':[('Lata de comida',1),('Azucar',1)],'xp':8,'desc':'Comida reforzada.'},
+    'Agua Purificada':   {'ingredientes':[('Agua sucia',2),('Pastilla potabilizadora',1)],'xp':6,'desc':'Agua potable.'},
 }
 
-# Materiales crafteo (no equipables, solo para crafting)
-MATERIALES = {
-    'Trapo', 'Gasolina', 'Botella vacía', 'Alcohol', 'Palo', 'Cuerda',
-    'Chatarra metálica', 'Pólvora', 'Cable', 'Lata vacía', 'Azúcar',
-    'Agua sucia', 'Pastilla potabilizadora', 'Lata vacía'
+RECETAS_BIBLIOTECA = {
+    'Ballesta':          {'ingredientes':[('Palo',3),('Cuerda',2),('Chatarra metalica',1)],'xp':40,'desc':'Silenciosa y letal.','plano':'Plano: Ballesta'},
+    'Machete':           {'ingredientes':[('Chatarra metalica',2),('Cuerda',1)],'xp':22,'desc':'Hoja improvisada.','plano':'Plano: Machete'},
+    'Rifle Modificado':  {'ingredientes':[('Rifle',1),('Chatarra metalica',1),('Cuerda',1)],'xp':45,'desc':'Rifle mejorado.','plano':'Plano: Rifle Modificado'},
+    'Botiquin Mejorado': {'ingredientes':[('Botiquin',1),('Antibioticos',1),('Morfina',1)],'xp':35,'desc':'Cura completa.','plano':'Plano: Botiquin Mejorado'},
+    'Comida Cocinada':   {'ingredientes':[('Lata de comida',2),('Agua sucia',1)],'xp':12,'desc':'Comida caliente. Campamento req.','plano':'Plano: Comida Cocinada','requiere_campamento':True},
 }
 
-# Loot posible al saquear edificios
-LOOT_EDIFICIO = [
-    ('Trapo', 40), ('Gasolina', 20), ('Botella vacía', 30), ('Alcohol', 25),
-    ('Palo', 35), ('Cuerda', 30), ('Chatarra metálica', 25), ('Pólvora', 15),
-    ('Cable', 20), ('Lata vacía', 25), ('Azúcar', 20), ('Agua sucia', 30),
-    ('Pastilla potabilizadora', 15), ('Lata de comida', 30), ('Venda', 20),
-    ('Cuchillo', 10), ('Rifle', 5), ('Antibióticos', 12), ('Morfina', 8),
-    ('Yoduro de potasio', 8),
-]
+PIEZAS_BARCO = 4  # piezas de motor necesarias
+COMBUSTIBLE_COCHE = 5  # litros de gasolina
 
-# Árbol de habilidades expandido (estilo Project Zomboid)
-HABILIDADES = {
-    # --- COMBATE ---
-    'fuerza':          {'nombre': 'Músculo',          'desc': '+5 Daño base permanente.',          'coste': 1, 'cat': 'combate',      'req': None},
-    'fuerza2':         {'nombre': 'Bruto',             'desc': '+8 Daño adicional permanente.',     'coste': 2, 'cat': 'combate',      'req': 'fuerza'},
-    'armas_fuego':     {'nombre': 'Tirador',           'desc': '+15 Daño con armas de fuego.',      'coste': 2, 'cat': 'combate',      'req': 'fuerza'},
-    'esquivar':        {'nombre': 'Evasor',            'desc': '15% de evadir ataques.',            'coste': 1, 'cat': 'combate',      'req': None},
-    'esquivar2':       {'nombre': 'Fantasma',          'desc': '25% de evadir ataques.',            'coste': 2, 'cat': 'combate',      'req': 'esquivar'},
-    'golpe_critico':   {'nombre': 'Ojo Clínico',       'desc': '20% de infligir daño doble.',       'coste': 2, 'cat': 'combate',      'req': 'fuerza'},
-    'sigilo':          {'nombre': 'Sombra',            'desc': 'Los zombis no te detectan a dist>3.','coste': 2, 'cat': 'combate',     'req': 'esquivar'},
-
-    # --- SUPERVIVENCIA ---
-    'supervivencia':   {'nombre': 'Metabolismo',       'desc': 'El hambre baja más despacio.',      'coste': 1, 'cat': 'supervivencia','req': None},
-    'supervivencia2':  {'nombre': 'Ayuno Extremo',     'desc': 'El hambre baja aún más despacio.',  'coste': 2, 'cat': 'supervivencia','req': 'supervivencia'},
-    'resistencia':     {'nombre': 'Piel Dura',         'desc': '+20 HP máximo permanente.',         'coste': 1, 'cat': 'supervivencia','req': None},
-    'resistencia2':    {'nombre': 'Coraza',            'desc': '+30 HP máximo adicional.',          'coste': 2, 'cat': 'supervivencia','req': 'resistencia'},
-    'medicina':        {'nombre': 'Paramédico',        'desc': 'Los items curativos curan +30%.',   'coste': 2, 'cat': 'supervivencia','req': 'resistencia'},
-    'inmunidad':       {'nombre': 'Sistema Inmune',    'desc': '50% resistencia a infecciones.',    'coste': 2, 'cat': 'supervivencia','req': 'medicina'},
-
-    # --- RECURSOS ---
-    'carroñero':       {'nombre': 'Carroñero',         'desc': 'Encuentras más dinero al matar.',   'coste': 1, 'cat': 'recursos',     'req': None},
-    'carroñero2':      {'nombre': 'Buitre',            'desc': '+50% loot en edificios.',           'coste': 2, 'cat': 'recursos',     'req': 'carroñero'},
-    'mochila_ext':     {'nombre': 'Mochilero',         'desc': '+2 slots de inventario.',           'coste': 1, 'cat': 'recursos',     'req': None},
-    'mochila_ext2':    {'nombre': 'Cargador',          'desc': '+3 slots de inventario adicionales.','coste': 2, 'cat': 'recursos',    'req': 'mochila_ext'},
-    'mochila_ext3':    {'nombre': 'Camionero',         'desc': '+5 slots de inventario totales.',   'coste': 3, 'cat': 'recursos',     'req': 'mochila_ext2'},
-    'crafteo':         {'nombre': 'Manitas',           'desc': 'Desbloquea recetas avanzadas.',     'coste': 2, 'cat': 'recursos',     'req': None},
-    'crafteo2':        {'nombre': 'Ingeniero',         'desc': 'Crafteas con 1 ingrediente menos.', 'coste': 3, 'cat': 'recursos',     'req': 'crafteo'},
-
-    # --- EXPLORACIÓN ---
-    'agricultura':     {'nombre': 'Botánico',          'desc': 'Permite plantar en el sector.',     'coste': 1, 'cat': 'exploracion',  'req': None},
-    'agricultura2':    {'nombre': 'Granjero',          'desc': 'Las cosechas dan el doble.',        'coste': 2, 'cat': 'exploracion',  'req': 'agricultura'},
-    'navegacion':      {'nombre': 'Orientación',       'desc': 'Ve los edificios en un radio +5.',  'coste': 1, 'cat': 'exploracion',  'req': None},
-    'cartografo':      {'nombre': 'Cartógrafo',        'desc': 'El mapa revela zonas seguras.',     'coste': 2, 'cat': 'exploracion',  'req': 'navegacion'},
-    'velocidad':       {'nombre': 'Corredor',          'desc': 'Puedes huir siempre del combate.',  'coste': 2, 'cat': 'exploracion',  'req': None},
-}
+DROPS_JEFE = ['Armadura Placas','Casco Militar','Rifle','Morfina','Morfina','Botiquin','Vial de Retencion','Escopeta']
+DROPS_BANDIDO = ['Cuchillo','Pistola 9mm','Balas 9mm','Lata de comida','Venda','Chatarra metalica','Balas Rifle']
