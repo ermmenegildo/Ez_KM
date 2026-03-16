@@ -1,0 +1,189 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="map-container">
+
+    <header class="hud-header">
+        <div class="glitch-title" data-text="LOCALIZADOR URBANO">// GPS_CITY_MAP</div>
+        <div>
+            {% if es_noche %}
+            <span class="blink-red">● NOCHE — PELIGRO CRÍTICO</span>
+            {% else %}
+            <span class="text-green">● DÍA — EXPLORACIÓN ACTIVA</span>
+            {% endif %}
+        </div>
+        <a href="{{ url_for('juego') }}" class="btn-nav">[ ← PANEL ]</a>
+    </header>
+
+    <div class="district-banner">
+        <h2>{{ distrito }}</h2>
+        <p>COORDENADAS: [X: {{ p.x }} | Y: {{ p.y }}] — {{ info_distrito.get('desc','') }}</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0;">
+
+        {# RADAR FULL #}
+        <div class="sidebar-section">
+            <h3>// RADAR TÁCTICO</h3>
+            <div class="mini-map-container">
+                <div class="scan-line"></div>
+                <canvas id="radar-canvas" width="300" height="280"></canvas>
+            </div>
+            <div class="map-legend" style="margin-top:6px;">
+                <div class="leg-item"><span class="leg-dot" style="background:#1fff1f"></span>TÚ</div>
+                <div class="leg-item"><span class="leg-square" style="background:#ffdd00"></span>EDIFICIO</div>
+                <div class="leg-item"><span class="leg-dot" style="background:#ff3131"></span>ZOMBI</div>
+                <div class="leg-item"><span class="leg-dot" style="background:#00aaff"></span>MUERTE ANT.</div>
+                <div class="leg-item"><span class="leg-dot" style="background:rgba(31,255,136,.5)"></span>ZONA SEG</div>
+            </div>
+        </div>
+
+        {# POLITICAL MAP FULL #}
+        <div class="sidebar-section">
+            <h3>// {{ t.mapa_politico }}</h3>
+            <canvas id="politico-canvas" width="300" height="280"></canvas>
+            <div class="district-legend">
+                {% for d_name, d_info in distritos.items() %}
+                <div class="dist-item">
+                    <span class="dist-color" style="background:{{ d_info.color }}"></span>
+                    <span style="font-size:.8rem;">{{ d_name }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="data-grid">
+        <div class="data-card">
+            <span class="label">REFUGIO MÁS CERCANO:</span>
+            <span class="value">X:{{ rx }} Y:{{ ry }}</span>
+        </div>
+        <div class="data-card">
+            <span class="label">DISTANCIA AL BÚNKER:</span>
+            <span class="value blink">{{ dist_refugio }}m</span>
+        </div>
+        <div class="data-card">
+            <span class="label">CICLO:</span>
+            <span class="value">
+                {% if es_noche %}{{ 180 - p.ciclo_pasos }} pasos → AMANECER
+                {% else %}{{ 100 - p.ciclo_pasos }} pasos → NOCHE{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <div class="map-footer">
+        <a href="{{ url_for('juego') }}" class="btn-execute">[ ← VOLVER AL PANEL DE ACCIÓN ]</a>
+    </div>
+</div>
+
+<script>
+const PX = {{ p.x }};
+const PY = {{ p.y }};
+const EDIFICIOS = {{ p.edificios_mapa | tojson }};
+const ENEMIGOS  = {{ p.enemigos_mapa  | tojson }};
+const MUERTES   = {{ p.muertes_mapa   | tojson }};
+const ZONAS_SEG = {{ zonas_seguras    | tojson }};
+const DISTRITOS = {{ distritos | tojson }};
+
+// RADAR
+(function() {
+    const canvas = document.getElementById('radar-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height, CX = W/2, CY = H/2, SCALE = 4.5;
+    function toC(wx,wy){return[CX+(wx-PX)*SCALE,CY-(wy-PY)*SCALE];}
+    function draw(){
+        ctx.clearRect(0,0,W,H);
+        ctx.strokeStyle='rgba(31,255,31,0.05)';ctx.lineWidth=1;
+        for(let x=0;x<W;x+=18){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+        for(let y=0;y<H;y+=18){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+        ctx.strokeStyle='rgba(31,255,31,0.12)';
+        ctx.beginPath();ctx.moveTo(CX,0);ctx.lineTo(CX,H);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(0,CY);ctx.lineTo(W,CY);ctx.stroke();
+        const a=(Date.now()/2000)%(Math.PI*2);
+        ctx.save();ctx.translate(CX,CY);ctx.rotate(a);
+        const g=ctx.createLinearGradient(0,0,110,0);
+        g.addColorStop(0,'rgba(31,255,31,0.2)');g.addColorStop(1,'rgba(31,255,31,0)');
+        ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,140,0,Math.PI/4);ctx.closePath();ctx.fill();
+        ctx.restore();
+        ZONAS_SEG.forEach(([zx,zy])=>{
+            const[cx,cy]=toC(zx,zy);
+            ctx.beginPath();ctx.arc(cx,cy,SCALE*3.5,0,Math.PI*2);
+            ctx.fillStyle='rgba(31,255,136,0.07)';ctx.fill();
+            ctx.strokeStyle='rgba(31,255,136,0.35)';ctx.lineWidth=1;ctx.stroke();
+        });
+        MUERTES.forEach(m=>{
+            const[cx,cy]=toC(m.x,m.y);
+            if(cx<-5||cx>W+5||cy<-5||cy>H+5)return;
+            ctx.beginPath();ctx.arc(cx,cy,6,0,Math.PI*2);
+            ctx.fillStyle='rgba(0,100,220,0.65)';ctx.fill();
+            ctx.strokeStyle='#00aaff';ctx.lineWidth=1.5;ctx.stroke();
+            ctx.strokeStyle='#00aaff';ctx.lineWidth=1;
+            ctx.beginPath();ctx.moveTo(cx-5,cy);ctx.lineTo(cx+5,cy);ctx.stroke();
+            ctx.beginPath();ctx.moveTo(cx,cy-5);ctx.lineTo(cx,cy+5);ctx.stroke();
+        });
+        EDIFICIOS.forEach(ed=>{
+            const[cx,cy]=toC(ed.x,ed.y);
+            if(cx<-5||cx>W+5||cy<-5||cy>H+5)return;
+            ctx.fillStyle=ed.saqueado?'rgba(90,70,0,0.5)':'#ffdd00';
+            ctx.fillRect(cx-5,cy-5,10,10);
+            if(!ed.saqueado){ctx.strokeStyle='#cc9900';ctx.lineWidth=1;ctx.strokeRect(cx-5,cy-5,10,10);}
+        });
+        const p=(Math.sin(Date.now()/280)+1)/2;
+        ENEMIGOS.forEach(z=>{
+            const[cx,cy]=toC(z.x,z.y);
+            if(cx<-5||cx>W+5||cy<-5||cy>H+5)return;
+            ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);
+            ctx.fillStyle='#ff3131';ctx.fill();
+            ctx.beginPath();ctx.arc(cx,cy,5+p*4,0,Math.PI*2);
+            ctx.strokeStyle=`rgba(255,49,49,${0.25*p})`;ctx.lineWidth=1.5;ctx.stroke();
+        });
+        ctx.fillStyle='#1fff1f';
+        ctx.beginPath();ctx.moveTo(CX,CY-10);ctx.lineTo(CX-7,CY+6);ctx.lineTo(CX+7,CY+6);ctx.closePath();
+        ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+        const pg=(Math.sin(Date.now()/450)+1)/2;
+        ctx.beginPath();ctx.arc(CX,CY,12+pg*5,0,Math.PI*2);
+        ctx.strokeStyle=`rgba(31,255,31,${0.2+0.15*pg})`;ctx.lineWidth=2;ctx.stroke();
+        requestAnimationFrame(draw);
+    }
+    draw();
+})();
+
+// POLITICAL MAP
+(function() {
+    const canvas = document.getElementById('politico-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2, r = Math.min(W,H)/2 - 5;
+    const zones = [
+        {color:'#2ecc71',r0:0,   r1:0.14,a0:0,  a1:360},
+        {color:'#e74c3c',r0:0.14,r1:0.32,a0:0,  a1:360},
+        {color:'#f39c12',r0:0.32,r1:0.64,a0:-45,a1:45 },
+        {color:'#c0392b',r0:0.32,r1:0.64,a0:45, a1:90 },
+        {color:'#16a085',r0:0.32,r1:0.64,a0:90, a1:135},
+        {color:'#1abc9c',r0:0.32,r1:0.64,a0:135,a1:180},
+        {color:'#8e44ad',r0:0.32,r1:0.64,a0:180,a1:225},
+        {color:'#7f8c8d',r0:0.32,r1:0.64,a0:225,a1:270},
+        {color:'#27ae60',r0:0.32,r1:0.64,a0:270,a1:315},
+        {color:'#2980b9',r0:0.64,r1:1.0, a0:0,  a1:360},
+    ];
+    zones.forEach(z=>{
+        const ri=r*z.r0,ro=r*z.r1,a0=(z.a0-90)*Math.PI/180,a1=(z.a1-90)*Math.PI/180;
+        ctx.beginPath();
+        if(z.a1-z.a0>=360){ctx.arc(cx,cy,ro,0,Math.PI*2);if(ri>0)ctx.arc(cx,cy,ri,Math.PI*2,0,true);}
+        else{ctx.arc(cx,cy,ro,a0,a1);ctx.arc(cx,cy,ri,a1,a0,true);}
+        ctx.closePath();ctx.fillStyle=z.color+'44';ctx.strokeStyle=z.color+'88';ctx.lineWidth=1;
+        ctx.fill();ctx.stroke();
+    });
+    ctx.strokeStyle='rgba(31,255,31,0.04)';ctx.lineWidth=1;
+    for(let i=0;i<W;i+=14){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke();}
+    for(let i=0;i<H;i+=14){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(W,i);ctx.stroke();}
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='rgba(31,255,31,0.22)';ctx.lineWidth=1.5;ctx.stroke();
+    const ms=r/110;
+    const ppx=Math.max(cx-r+6,Math.min(cx+r-6,cx+PX*ms));
+    const ppy=Math.max(cy-r+6,Math.min(cy+r-6,cy-PY*ms));
+    ctx.beginPath();ctx.arc(ppx,ppy,6,0,Math.PI*2);ctx.fillStyle='#1fff1f';ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+})();
+</script>
+
+{% endblock %}

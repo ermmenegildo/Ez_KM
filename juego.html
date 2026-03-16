@@ -1,0 +1,557 @@
+{% extends "layout.html" %}
+{% block content %}
+
+{# ================================================================
+   MODALES
+   ================================================================ #}
+{% if p.enemigo or p.interaccion or p.mercader %}
+<div class="modal-overlay">
+<div class="modal-box
+  {%- if p.enemigo %} modal-combat
+  {%- elif p.mercader %} modal-merchant
+  {%- elif p.interaccion and p.interaccion.tipo == 'superviviente' %} modal-survivor
+  {%- elif p.interaccion and p.interaccion.tipo == 'coche' %} modal-car
+  {%- else %} modal-building{%- endif %}">
+
+  {# ---- COMBATE ---- #}
+  {% if p.enemigo %}
+  <div class="modal-title blink-red">// CONTACTO ENEMIGO</div>
+  <div class="modal-enemy-row">
+    <span style="color:{{ p.enemigo.color if p.enemigo.color is defined else '#ff3131' }};font-size:1.1rem;">{{ p.enemigo.nombre }}</span>
+    <span class="text-dim">HP <span class="text-red">{{ p.enemigo.hp }}/{{ p.enemigo.hp_max }}</span></span>
+  </div>
+  {% set hp_pct = [(p.enemigo.hp / [p.enemigo.hp_max,1]|max * 100)|int,100]|min %}
+  <div class="enemy-hp-bar"><div class="enemy-hp-fill" style="width:{{ hp_pct }}%;background:{{ p.enemigo.color if p.enemigo.color is defined else '#ff3131' }}"></div></div>
+  {% if p.log_combate %}<ul class="combat-log">{% for l in p.log_combate %}<li>&gt; {{ l }}</li>{% endfor %}</ul>{% endif %}
+  <div class="vats-label">// {{ t.get('vats_titulo','V.A.T.S.') }}</div>
+  <div class="vats-grid">
+    {% for pid,lbl,mult,fx in [('cabeza',t.get('parte_cabeza','CABEZA'),'x2.5','ATURDIR'),('torso',t.get('parte_torso','TORSO'),'x1.0','-'),('brazo_izq',t.get('parte_brazo_izq','BRAZO IZQ'),'x0.7','DESARMAR'),('brazo_der',t.get('parte_brazo_der','BRAZO DER'),'x0.7','DESARMAR'),('pierna_izq',t.get('parte_pierna_izq','PIERNA IZQ'),'x0.8','RALENT.'),('pierna_der',t.get('parte_pierna_der','PIERNA DER'),'x0.8','RALENT.')] %}
+    <a href="{{ url_for('atacar',parte=pid) }}" class="btn btn-red vats-btn">{{ lbl }}<br><span class="vats-mult">{{ mult }}</span><span class="vats-fx"> {{ fx }}</span></a>
+    {% endfor %}
+  </div>
+  <div class="modal-actions">
+    <a href="{{ url_for('atacar',parte='torso') }}" class="btn btn-red modal-action-btn">[ {{ t.get('atacar','ATACAR') }} ]</a>
+    <a href="{{ url_for('huir') }}"                 class="btn btn-yellow modal-action-btn">[ {{ t.get('huir','HUIR') }} ]</a>
+  </div>
+
+  {# ---- COCHE / GANZUA ---- #}
+  {% elif p.interaccion and p.interaccion.tipo == 'coche' %}
+  <div class="modal-title text-yellow">// FORZAR CERRADURA</div>
+  <p class="modal-body-text">{{ p.interaccion.msj }}</p>
+  <div class="lockpick-container">
+    <div class="lp-combo-label">SECUENCIA:</div>
+    <div class="lp-combo">
+      {% set prog = p.interaccion.progreso %}
+      {% for i in range(p.interaccion.combo|length) %}
+      <span class="lp-key {{ 'lp-ok' if i < prog|length else 'lp-pending' }}">
+        {{ p.interaccion.combo[i]|upper }}
+      </span>
+      {% endfor %}
+    </div>
+    <div class="lp-status">
+      INTENTOS: <span class="text-red">{{ p.interaccion.intentos }}</span>/{{ p.interaccion.max_intentos }}
+      &nbsp; PROGRESO: <span class="text-green">{{ p.interaccion.progreso|length }}</span>/{{ p.interaccion.combo|length }}
+    </div>
+    <div class="lp-hint">Pulsa las teclas correctas en orden (WASD o botones)</div>
+    <div class="lp-buttons">
+      <a href="{{ url_for('ganzua_input',tecla='w') }}" class="btn lp-btn" id="lp-w">W</a>
+      <div style="display:flex;gap:4px;">
+        <a href="{{ url_for('ganzua_input',tecla='a') }}" class="btn lp-btn" id="lp-a">A</a>
+        <a href="{{ url_for('ganzua_input',tecla='s') }}" class="btn lp-btn" id="lp-s">S</a>
+        <a href="{{ url_for('ganzua_input',tecla='d') }}" class="btn lp-btn" id="lp-d">D</a>
+      </div>
+    </div>
+  </div>
+  <div class="modal-actions" style="margin-top:10px;">
+    <a href="{{ url_for('ignorar_coche') }}" class="btn modal-action-btn">[ ABANDONAR ]</a>
+  </div>
+
+  {# ---- SUPERVIVIENTE ---- #}
+  {% elif p.interaccion and p.interaccion.tipo == 'superviviente' %}
+  <div class="modal-title" style="color:var(--blue)">// SUPERVIVIENTE</div>
+  <p class="modal-body-text">{{ p.interaccion.msj }}</p>
+  {% if p.interaccion.en_peligro %}<p class="blink-red" style="margin:6px 0;">[!] EN PELIGRO</p>{% endif %}
+  <div style="font-size:.9rem;color:rgba(31,255,31,.5);margin-bottom:8px;">
+    Recompensa:
+    {% for it in p.interaccion.recompensa %}<span class="mat-chip">{{ t.objetos.get(it,it) if t.objetos is defined else it }}</span>{% endfor %}
+  </div>
+  <div class="modal-actions">
+    <a href="{{ url_for('rescatar_superviviente') }}" class="btn btn-blue modal-action-btn">[ {{ t.get('rescatar','RESCATAR') }} ]</a>
+    <a href="{{ url_for('ignorar_superviviente') }}"  class="btn modal-action-btn">[ {{ t.get('ignorar','IGNORAR') }} ]</a>
+  </div>
+
+  {# ---- CADAVER ---- #}
+  {% elif p.interaccion and p.interaccion.tipo == 'cadaver' %}
+  <div class="modal-title text-yellow">// CADAVER</div>
+  <p class="modal-body-text">{{ p.interaccion.msj }}</p>
+  <div style="font-size:.9rem;color:rgba(31,255,31,.5);margin-bottom:8px;">
+    {% for it in p.interaccion.loot %}<span class="mat-chip">{{ t.objetos.get(it,it) if t.objetos is defined else it }}</span>{% endfor %}
+  </div>
+  <div class="modal-actions">
+    <a href="{{ url_for('registrar_cadaver') }}" class="btn btn-yellow modal-action-btn">[ {{ t.get('registrar_cadaver','REGISTRAR') }} ]</a>
+    <a href="{{ url_for('ignorar_cadaver') }}"   class="btn modal-action-btn">[ {{ t.get('ignorar','IGNORAR') }} ]</a>
+  </div>
+
+  {# ---- TRAMPA ---- #}
+  {% elif p.interaccion and p.interaccion.tipo == 'trampa' %}
+  <div class="modal-title blink-red">// TRAMPA</div>
+  <p class="modal-body-text">{{ p.interaccion.msj }}</p>
+  <div class="modal-actions">
+    <a href="{{ url_for('evitar_trampa') }}"       class="btn btn-yellow modal-action-btn">[ RODEAR ]</a>
+    <a href="{{ url_for('ignorar_interaccion') }}" class="btn btn-red modal-action-btn">[ PISAR (-{{ p.interaccion.dano }}HP) ]</a>
+  </div>
+
+  {# ---- EDIFICIO ---- #}
+  {% elif p.interaccion and p.interaccion.tipo == 'edificio' %}
+  <div class="modal-title text-yellow">// EDIFICIO</div>
+  <p class="modal-body-text">{{ p.interaccion.msj }}</p>
+  {% if p.interaccion.zombis %}<p class="blink-red" style="margin:6px 0;">[!] SENAL BIOLOGICA</p>
+  {% else %}<p class="text-green" style="margin:6px 0;">[OK] DESPEJADO</p>{% endif %}
+  <div class="modal-actions">
+    <a href="{{ url_for('entrar_edificio') }}"  class="btn btn-yellow modal-action-btn">[ ENTRAR ]</a>
+    <a href="{{ url_for('ignorar_edificio') }}" class="btn modal-action-btn">[ {{ t.get('ignorar','IGNORAR') }} ]</a>
+  </div>
+
+  {# ---- MERCADER ---- #}
+  {% elif p.mercader %}
+  <div class="modal-title" style="color:var(--blue)">// MERCADER</div>
+  {% for item in p.mercader.items %}
+  <div class="merch-row">
+    <span class="merch-name">{{ t.objetos.get(item,item) if t.objetos is defined else item }}</span>
+    <span class="cc-val">{{ p.mercader.precios[item] }}CC</span>
+    <a href="{{ url_for('comprar_mercader',item=item) }}" class="btn btn-blue btn-sm">[ {{ t.get('comprar','COMPRAR') }} ]</a>
+  </div>
+  {% endfor %}
+  <div class="modal-actions" style="margin-top:8px;">
+    <a href="{{ url_for('cerrar_mercader') }}" class="btn modal-action-btn">[ {{ t.get('cerrar','CERRAR') }} ]</a>
+  </div>
+  {% endif %}
+
+</div>
+</div>
+{% endif %}
+
+{# BANNERS #}
+{% if zona_segura is defined and zona_segura %}
+<div class="top-banner banner-safe">[ {{ t.get('zona_segura','ZONA SEGURA') }} // HP + ]</div>
+{% elif es_noche %}
+<div class="top-banner banner-night">[ NOCHE // PELIGRO ]</div>
+{% endif %}
+
+<div class="game-layout">
+
+{# ===================== MAIN ===================== #}
+<div class="main-view">
+
+  {# HUD #}
+  <header class="hud-header">
+    <div class="hud-box">
+      <span class="lbl">LVL</span><span class="val">{{ p.lvl }}</span>
+      <span class="lbl"> EXP</span><span class="val">{{ p.exp }}/100</span>
+      <span class="lbl"> SP</span><span class="val sp-val">{{ p.sp }}</span>
+    </div>
+    <div class="hud-box hud-center">
+      <div class="hud-district">// {{ distrito }}</div>
+      <div class="hud-time {{ 'blink-red' if es_noche }}">{{ 'NOCHE' if es_noche else 'DIA' }}</div>
+    </div>
+    <div class="hud-box hud-right" style="display:flex;align-items:center;gap:10px;">
+      <span><span class="lbl">CC</span><span class="val cc-val">{{ p.dinero }}</span> <span class="lbl">D</span><span class="val dias-val">{{ p.dias }}</span></span>
+      <div class="lang-switcher">
+        <a href="{{ url_for('set_language',lang='es') }}" class="{{ 'lang-active' if session.lang=='es' else '' }}">ES</a>
+        <a href="{{ url_for('set_language',lang='en') }}" class="{{ 'lang-active' if session.lang=='en' else '' }}">EN</a>
+        <a href="{{ url_for('set_language',lang='eu') }}" class="{{ 'lang-active' if session.lang=='eu' else '' }}">EU</a>
+      </div>
+    </div>
+  </header>
+
+  {# DISTRICT #}
+  <div class="district-bar">
+    {% if info_distrito is defined %}
+    <span style="color:{{ info_distrito.get('color','#1fff1f') }}">{{ distrito }}</span>
+    <span class="text-dim"> — {{ info_distrito.get('desc','') }}</span>
+    <span class="pips">{% for i in range(5) %}<span class="pip" style="background:{{ '#ff3131' if i<info_distrito.get('peligro',1) else '#1a3a1a' }}"></span>{% endfor %}</span>
+    {% else %}<span>{{ distrito }}</span>{% endif %}
+    <span class="text-dim coords-lbl">[{{ p.x }},{{ p.y }}]</span>
+  </div>
+
+  {# LOG #}
+  <div class="terminal">
+    <p class="log-line">&gt; {{ p.log }}</p>
+    {% if p.hambre < 20 %}<p class="log-line log-alert">!! {{ t.get('hambre','NUTRICION') }} CRITICA !!</p>{% endif %}
+    {% if p.hp < (p.max_hp*0.25)|int %}<p class="log-line log-alert">!! HP CRITICO !!</p>{% endif %}
+  </div>
+
+  {# BRUJULA #}
+  <div class="compass-area">
+    {% if not p.enemigo and not p.interaccion and not p.mercader %}
+    <div class="compass">
+      <a href="/mover/n" class="btn nav-btn north">N</a>
+      <a href="/mover/o" class="btn nav-btn west">O</a>
+      <div class="nav-center"><span class="text-blue">{{ p.x }}:{{ p.y }}</span></div>
+      <a href="/mover/e" class="btn nav-btn east">E</a>
+      <a href="/mover/s" class="btn nav-btn south">S</a>
+    </div>
+    <div style="margin-top:8px;text-align:center;">
+      <a href="{{ url_for('dormir') }}" class="btn btn-sm {{ 'btn-yellow' if es_noche else '' }}"
+         style="letter-spacing:1px;">[ DORMIR{% if es_noche %} (NOCHE){% endif %} ]</a>
+    </div>
+    {% else %}
+    <div class="waiting-notice blink-red">&gt; EVENTO ACTIVO</div>
+    {% endif %}
+  </div>
+
+  {# TABS #}
+  <div class="tabs-section">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showTab('inv',this)">{{ t.get('mochila','INVENTARIO') }}</button>
+      <button class="tab-btn"        onclick="showTab('equip',this)">EQUIPO</button>
+      <button class="tab-btn"        onclick="showTab('estado',this)">ESTADO</button>
+      <button class="tab-btn"        onclick="showTab('habs',this)">{{ t.get('habilidades','HABILIDADES') }}</button>
+    </div>
+
+    {# INVENTARIO #}
+    <div id="tab-inv" class="tab-pane active">
+      <div class="tab-meta">SLOTS <span class="val">{{ p.inventario|length }}/{{ p.max_inventario }}</span></div>
+      {% if not p.inventario %}<p class="empty-msg">&gt; MOCHILA VACIA</p>
+      {% else %}
+      <ul class="inv-list">
+        {% for item in p.inventario %}
+        <li class="inv-row">
+          <span class="inv-name">{{ t.objetos.get(item,item) if t.objetos is defined else item }}</span>
+          <div class="inv-actions">
+            <a href="{{ url_for('usar_item',item=item) }}"    class="btn btn-sm">[ {{ t.get('curar','USAR') }} ]</a>
+            <a href="{{ url_for('equipar_item',item=item) }}" class="btn btn-sm btn-yellow">[ EQ ]</a>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+
+    {# EQUIPO #}
+    <div id="tab-equip" class="tab-pane">
+      <div class="equip-layout">
+        <div class="sil-wrap">
+          <div class="sil-hint">[click = {{ t.get('desequipar','DESEQ') }}]</div>
+          <div class="sil-slot-wrap" style="align-self:center;">
+            <a href="{{ url_for('desequipar',slot='cabeza') }}" class="sil-slot sil-head {{ 'sil-equipped' if p.equipo.cabeza }}">
+              <span class="sil-slot-label">{{ t.get('slot_cabeza','CAB') }}</span>
+              {% if p.equipo.cabeza %}<span class="sil-item-text">{{ (t.objetos.get(p.equipo.cabeza,p.equipo.cabeza) if t.objetos is defined else p.equipo.cabeza)[:7] }}</span>{% endif %}
+            </a>
+          </div>
+          <div class="sil-mid-row">
+            <div class="sil-slot-wrap">
+              <a href="{{ url_for('desequipar',slot='mano_der') }}" class="sil-slot sil-arm {{ 'sil-equipped' if p.equipo.mano_der }}">
+                <span class="sil-slot-label">{{ t.get('slot_mano_der','ARMA') }}</span>
+                {% if p.equipo.mano_der %}<span class="sil-item-text">{{ (t.objetos.get(p.equipo.mano_der,p.equipo.mano_der) if t.objetos is defined else p.equipo.mano_der)[:5] }}</span>{% endif %}
+              </a>
+            </div>
+            <div class="sil-slot-wrap">
+              <a href="{{ url_for('desequipar',slot='torso') }}" class="sil-slot sil-torso {{ 'sil-equipped' if p.equipo.torso }}">
+                <span class="sil-slot-label">{{ t.get('slot_torso','TORSO') }}</span>
+                {% if p.equipo.torso %}<span class="sil-item-text">{{ (t.objetos.get(p.equipo.torso,p.equipo.torso) if t.objetos is defined else p.equipo.torso)[:5] }}</span>{% endif %}
+              </a>
+            </div>
+          </div>
+          <div class="sil-slot-wrap" style="align-self:center;">
+            <a href="{{ url_for('desequipar',slot='espalda') }}" class="sil-slot sil-pack {{ 'sil-equipped' if p.equipo.espalda }}">
+              <span class="sil-slot-label">{{ t.get('slot_espalda','PACK') }}</span>
+              {% if p.equipo.espalda %}<span class="sil-item-text">{{ (t.objetos.get(p.equipo.espalda,p.equipo.espalda) if t.objetos is defined else p.equipo.espalda)[:5] }}</span>{% endif %}
+            </a>
+          </div>
+          <div class="sil-mid-row">
+            <div class="sil-slot-wrap">
+              <a href="{{ url_for('desequipar',slot='pies') }}" class="sil-slot sil-leg {{ 'sil-equipped' if p.equipo.pies }}">
+                <span class="sil-slot-label">{{ t.get('slot_pies','PIES') }}</span>
+                {% if p.equipo.pies %}<span class="sil-item-text">{{ (t.objetos.get(p.equipo.pies,p.equipo.pies) if t.objetos is defined else p.equipo.pies)[:4] }}</span>{% endif %}
+              </a>
+            </div>
+            <div class="sil-slot-wrap"><div class="sil-slot sil-leg sil-filler"><span class="sil-slot-label">---</span></div></div>
+          </div>
+        </div>
+        <div class="equip-stats-panel">
+          <div class="estats-title">// STATS</div>
+          <div class="estat-row"><span class="estat-lbl">DEF</span>  <span class="estat-val text-green">{{ p.defensa }}</span></div>
+          <div class="estat-row"><span class="estat-lbl">EVA</span>  <span class="estat-val text-blue">{{ (p.evasion*100)|int }}%</span></div>
+          <div class="estat-row"><span class="estat-lbl">DMG</span>  <span class="estat-val cc-val">{{ p.dmg_base }}</span></div>
+          {% for sid,lbl in [('cabeza',t.get('slot_cabeza','CAB')),('torso',t.get('slot_torso','TORSO')),('mano_der',t.get('slot_mano_der','ARMA')),('espalda',t.get('slot_espalda','PACK')),('pies',t.get('slot_pies','PIES'))] %}
+          <div class="estat-row">
+            <span class="estat-lbl">{{ lbl }}</span>
+            {% if p.equipo[sid] %}
+            <span class="estat-val" style="font-size:.75rem;color:var(--green);">{{ t.objetos.get(p.equipo[sid],p.equipo[sid]) if t.objetos is defined else p.equipo[sid] }}</span>
+            <a href="{{ url_for('desequipar',slot=sid) }}" class="btn btn-red btn-sm">[X]</a>
+            {% else %}<span class="estat-val text-dim">---</span>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# ESTADO (infección + enfermedades) #}
+    <div id="tab-estado" class="tab-pane">
+      {# INFECCION #}
+      <div class="infection-block">
+        <div class="inf-title">// INFECCION ZOMBI</div>
+        {% set inf = p.get('infeccion',0)|int %}
+        <div class="inf-bar-wrap">
+          <div class="inf-bar">
+            <div class="inf-fill" style="width:{{ inf }}%;background:{{ '#ff3131' if inf>70 else '#ff8800' if inf>40 else '#f1c40f' }};"></div>
+          </div>
+          <span class="inf-pct {{ 'text-red' if inf>50 else 'text-yellow' if inf>0 else 'text-green' }}">{{ inf }}%</span>
+        </div>
+        {% if inf == 0 %}
+        <div class="inf-status text-green">&gt; LIMPIO</div>
+        {% elif p.get('vial_activo',0) > 0 %}
+        <div class="inf-status text-yellow">&gt; RETENIDA — {{ p.vial_activo }} pasos restantes</div>
+        {% elif inf >= 75 %}
+        <div class="inf-status blink-red">&gt; CRITICO — USA UN VIAL YA</div>
+        {% else %}
+        <div class="inf-status text-red">&gt; INFECTADO — Busca Vial de Retencion</div>
+        {% endif %}
+      </div>
+
+      {# ENFERMEDADES ACTIVAS #}
+      <div class="inf-title" style="margin-top:10px;">// ENFERMEDADES</div>
+      {% set enfs = p.get('enfermedades_activas',{}) %}
+      {% if not enfs %}
+      <div class="text-green" style="font-size:.9rem;">&gt; Sin enfermedades activas</div>
+      {% else %}
+      {% for eid, edata in enfs.items() %}
+      {% set einfo = enfermedades.get(eid,{}) %}
+      <div class="disease-row">
+        <span class="disease-name text-red">{{ einfo.get('nombre',eid) }}</span>
+        <span class="text-dim" style="font-size:.8rem;"> — {{ edata.restante }} pasos restantes</span>
+        <div class="disease-cure text-dim" style="font-size:.8rem;">Cura: {{ einfo.get('cura','?') }}</div>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {# ESTADOS #}
+      <div class="inf-title" style="margin-top:10px;">// ESTADOS ACTIVOS</div>
+      {% if not p.estados %}
+      <div class="text-green" style="font-size:.9rem;">&gt; Sin estados negativos</div>
+      {% else %}
+      {% for e in p.estados %}
+      <div class="disease-row"><span class="disease-name text-red">{{ t.get(e,e)|upper }}</span></div>
+      {% endfor %}
+      {% endif %}
+    </div>
+
+    {# HABILIDADES #}
+    <div id="tab-habs" class="tab-pane">
+      <div class="tab-meta">{{ t.get('sp','SP') }}: <span class="sp-val">{{ p.sp }}</span></div>
+      {% for cat_id,cat_lbl in [('combate',t.get('cat_combate','COMBATE')),('supervivencia',t.get('cat_supervivencia','SUPERVIVENCIA')),('recursos',t.get('cat_recursos','RECURSOS')),('exploracion',t.get('cat_exploracion','EXPLORACION'))] %}
+      <div class="sk-cat sk-cat-{{ cat_id }}">
+        <div class="sk-cat-title">// {{ cat_lbl }}</div>
+        {% for hid,hab in habs.items() if hab.cat==cat_id %}
+        {% set tiene=hid in p.skills %}{% set req_ok=not hab.req or hab.req in p.skills %}{% set buyable=not tiene and req_ok and p.sp>=hab.coste %}
+        <div class="sk-row {{ 'sk-owned' if tiene else ('sk-buyable' if buyable else 'sk-locked') }} {{ 'sk-indent' if hab.req }}">
+          <div class="sk-info">
+            <span class="sk-state">{{ '[OK]' if tiene else '[ ] ' if req_ok else '[X] ' }}</span>
+            <span class="sk-name">{{ hab.nombre }}</span>
+            <span class="sk-dash"> — </span><span class="sk-desc">{{ hab.desc }}</span>
+            {% if hab.req and not tiene %}<span class="sk-req"> REQ: {{ habs[hab.req].nombre if hab.req in habs else hab.req }}</span>{% endif %}
+          </div>
+          <div class="sk-btn">
+            {% if tiene %}<span class="text-green">OK</span>
+            {% elif buyable %}<a href="{{ url_for('comprar_habilidad',hab_id=hid) }}" class="btn btn-yellow btn-sm">{{ hab.coste }}SP</a>
+            {% else %}<span class="text-dim">{{ hab.coste }}SP</span>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  {# BOTTOM NAV #}
+  <nav class="bottom-nav">
+    <a href="{{ url_for('mapa') }}" class="btn-nav">[ MAPA ]</a>
+    <a href="{{ url_for('leaderboard') }}" class="btn-nav">[ {{ t.get('ranking','RANKING') }} ]</a>
+    <a href="{{ url_for('index') }}" class="btn-nav" onclick="return confirm('Salir?')">[ SALIR ]</a>
+  </nav>
+
+</div>
+
+{# ===================== SIDEBAR ===================== #}
+<aside class="status-sidebar">
+
+  <div class="sidebar-section">
+    <h3>// {{ t.get('biometria','BIO-DATA') }}</h3>
+    <div class="bio-name">{{ p.nombre }}<span class="text-dim"> / {{ t.clases.get(p.clase,p.clase) if t.clases is defined else p.clase }}</span></div>
+    <div class="stat-block">
+      <div class="stat-row-lbl">{{ t.get('hp','HP') }} <span class="val">{{ p.hp }}/{{ p.max_hp }}</span></div>
+      <div class="statbar"><div class="statbar-fill hp" style="width:{{ [(p.hp/p.max_hp*100)|int,100]|min }}%"></div></div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-row-lbl">{{ t.get('hambre','HAMBRE') }} <span class="val">{{ p.hambre }}%</span></div>
+      <div class="statbar"><div class="statbar-fill" style="width:{{ p.hambre }}%;height:100%;background:{{ '#ff3131' if p.hambre<25 else '#ff8800' if p.hambre<50 else '#1fff1f' }};"></div></div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-row-lbl">EXP <span class="val">{{ p.exp }}/100</span></div>
+      <div class="statbar"><div class="statbar-fill exp" style="width:{{ p.exp }}%"></div></div>
+    </div>
+    {# MINI INFECCIÓN BAR en sidebar #}
+    {% set inf = p.get('infeccion',0)|int %}
+    {% if inf > 0 %}
+    <div class="stat-block">
+      <div class="stat-row-lbl" style="color:{{ '#ff3131' if inf>50 else '#ff8800' }};">INF <span style="color:inherit">{{ inf }}%</span>{% if p.get('vial_activo',0)>0 %} [RETENIDA]{% endif %}</div>
+      <div class="statbar"><div class="statbar-fill" style="width:{{ inf }}%;height:100%;background:{{ '#ff3131' if inf>70 else '#ff8800' }};"></div></div>
+    </div>
+    {% endif %}
+    <ul class="status-list">
+      {% if not p.estados and not p.get('enfermedades_activas',{}) %}
+      <li class="status-ok">&gt; {{ t.get('estable','ESTABLE') }}</li>
+      {% else %}
+      {% for e in p.estados %}<li class="status-bad">&gt; {{ t.get(e,e)|upper }}</li>{% endfor %}
+      {% for eid in p.get('enfermedades_activas',{}).keys() %}
+      <li class="status-bad">&gt; {{ enfermedades.get(eid,{}).get('nombre',eid)|upper }}</li>
+      {% endfor %}
+      {% endif %}
+    </ul>
+  </div>
+
+  <div class="sidebar-section">
+    <h3>// RADAR</h3>
+    <div class="radar-wrap">
+      <div class="scan-line"></div>
+      <canvas id="radar-canvas" width="256" height="174"></canvas>
+    </div>
+    <div class="map-legend">
+      <span class="leg"><span class="leg-dot" style="background:#1fff1f"></span>TU</span>
+      <span class="leg"><span style="display:inline-block;width:8px;height:8px;background:#ffdd00;margin-right:2px;"></span>EDIF</span>
+      <span class="leg"><span style="display:inline-block;width:8px;height:8px;background:#00aaff;border-radius:1px;margin-right:2px;"></span>COCHE</span>
+      <span class="leg"><span class="leg-dot" style="background:#ff3131"></span>ZOMBI</span>
+      <span class="leg"><span class="leg-dot" style="background:rgba(100,100,255,.6)"></span>MUERTE</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <h3>// {{ t.get('mapa_politico','MAPA') }}</h3>
+    <canvas id="politico-canvas" width="256" height="174"></canvas>
+    {% if distritos is defined %}
+    <div class="dist-legend">
+      {% for d_name,d_info in distritos.items() %}
+      <div class="dist-leg-item"><span class="dist-leg-color" style="background:{{ d_info.color }}"></span><span>{{ d_name }}</span></div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+</aside>
+</div>
+
+<script>
+function showTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(function(el){el.classList.remove('active');});
+  document.querySelectorAll('.tab-btn').forEach(function(el){el.classList.remove('active');});
+  var t=document.getElementById('tab-'+id); if(t)t.classList.add('active'); if(btn)btn.classList.add('active');
+}
+
+var PX={{p.x}},PY={{p.y}};
+var EDIFICIOS={{p.edificios_mapa|tojson}};
+var COCHES={{p.get('coches_mapa',[])|tojson}};
+var ENEMIGOS={{p.enemigos_mapa|tojson}};
+var MUERTES={{(p.muertes_mapa|default([]))|tojson}};
+var ZONAS_SEG={{(zonas_seguras|default([]))|tojson}};
+
+// RADAR
+(function(){
+  var cv=document.getElementById('radar-canvas'); if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height,CX=W/2,CY=H/2,SC=2.8;
+  function toC(wx,wy){return[CX+(wx-PX)*SC,CY-(wy-PY)*SC];}
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='rgba(31,255,31,0.05)';ctx.lineWidth=1;
+    for(var x=0;x<W;x+=16){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(var y=0;y<H;y+=16){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    ctx.strokeStyle='rgba(31,255,31,0.1)';
+    ctx.beginPath();ctx.moveTo(CX,0);ctx.lineTo(CX,H);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,CY);ctx.lineTo(W,CY);ctx.stroke();
+    var a=(Date.now()/2200)%(Math.PI*2);
+    ctx.save();ctx.translate(CX,CY);ctx.rotate(a);
+    var g=ctx.createLinearGradient(0,0,85,0);g.addColorStop(0,'rgba(31,255,31,0.14)');g.addColorStop(1,'rgba(31,255,31,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,100,0,Math.PI/4);ctx.closePath();ctx.fill();ctx.restore();
+    ZONAS_SEG.forEach(function(z){
+      var c=toC(z[0],z[1]);
+      ctx.beginPath();ctx.arc(c[0],c[1],SC*3.5,0,Math.PI*2);
+      ctx.fillStyle='rgba(31,255,136,0.07)';ctx.fill();
+      ctx.strokeStyle='rgba(31,255,136,0.28)';ctx.lineWidth=1;ctx.stroke();
+    });
+    MUERTES.forEach(function(m){
+      var c=toC(m.x,m.y); if(c[0]<-5||c[0]>W+5||c[1]<-5||c[1]>H+5)return;
+      ctx.beginPath();ctx.arc(c[0],c[1],5,0,Math.PI*2);ctx.fillStyle='rgba(80,80,220,0.6)';ctx.fill();
+      ctx.strokeStyle='#8888ff';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.strokeStyle='#8888ff';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(c[0]-4,c[1]);ctx.lineTo(c[0]+4,c[1]);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(c[0],c[1]-4);ctx.lineTo(c[0],c[1]+4);ctx.stroke();
+    });
+    EDIFICIOS.forEach(function(ed){
+      var c=toC(ed.x,ed.y); if(c[0]<-5||c[0]>W+5||c[1]<-5||c[1]>H+5)return;
+      ctx.fillStyle=ed.saqueado?'rgba(80,60,0,0.5)':'#ffdd00';ctx.fillRect(c[0]-4,c[1]-4,8,8);
+      if(!ed.saqueado){ctx.strokeStyle='#cc9900';ctx.lineWidth=1;ctx.strokeRect(c[0]-4,c[1]-4,8,8);}
+    });
+    // Coches — cuadrado azul
+    COCHES.forEach(function(c2){
+      var c=toC(c2.x,c2.y); if(c[0]<-5||c[0]>W+5||c[1]<-5||c[1]>H+5)return;
+      ctx.fillStyle=c2.forzado?'rgba(0,50,100,0.4)':'#00aaff';ctx.fillRect(c[0]-3,c[1]-5,6,9);
+      if(!c2.forzado){ctx.strokeStyle='#0088cc';ctx.lineWidth=1;ctx.strokeRect(c[0]-3,c[1]-5,6,9);}
+    });
+    var pulse=(Math.sin(Date.now()/280)+1)/2;
+    ENEMIGOS.forEach(function(z){
+      var c=toC(z.x,z.y); if(c[0]<-5||c[0]>W+5||c[1]<-5||c[1]>H+5)return;
+      ctx.beginPath();ctx.arc(c[0],c[1],4,0,Math.PI*2);ctx.fillStyle='#ff3131';ctx.fill();
+      ctx.beginPath();ctx.arc(c[0],c[1],4+pulse*3,0,Math.PI*2);ctx.strokeStyle='rgba(255,49,49,'+(0.2*pulse)+')';ctx.lineWidth=1.5;ctx.stroke();
+    });
+    ctx.fillStyle='#1fff1f';ctx.beginPath();ctx.moveTo(CX,CY-8);ctx.lineTo(CX-5,CY+5);ctx.lineTo(CX+5,CY+5);ctx.closePath();ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// MAPA POLÍTICO
+(function(){
+  var cv=document.getElementById('politico-canvas'); if(!cv)return;
+  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height,cx=W/2,cy=H/2,r=Math.min(W,H)/2-4;
+  var zones=[{color:'#2ecc71',r0:0,r1:0.14,a0:0,a1:360},{color:'#e74c3c',r0:0.14,r1:0.32,a0:0,a1:360},
+    {color:'#f39c12',r0:0.32,r1:0.64,a0:-45,a1:45},{color:'#c0392b',r0:0.32,r1:0.64,a0:45,a1:90},
+    {color:'#16a085',r0:0.32,r1:0.64,a0:90,a1:135},{color:'#1abc9c',r0:0.32,r1:0.64,a0:135,a1:180},
+    {color:'#8e44ad',r0:0.32,r1:0.64,a0:180,a1:225},{color:'#7f8c8d',r0:0.32,r1:0.64,a0:225,a1:270},
+    {color:'#27ae60',r0:0.32,r1:0.64,a0:270,a1:315},{color:'#2980b9',r0:0.64,r1:1.0,a0:0,a1:360}];
+  zones.forEach(function(z){
+    var ri=r*z.r0,ro=r*z.r1,a0=(z.a0-90)*Math.PI/180,a1=(z.a1-90)*Math.PI/180;
+    ctx.beginPath();
+    if(z.a1-z.a0>=360){ctx.arc(cx,cy,ro,0,Math.PI*2);if(ri>0)ctx.arc(cx,cy,ri,Math.PI*2,0,true);}
+    else{ctx.arc(cx,cy,ro,a0,a1);ctx.arc(cx,cy,ri,a1,a0,true);}
+    ctx.closePath();ctx.fillStyle=z.color+'44';ctx.strokeStyle=z.color+'88';ctx.lineWidth=1;ctx.fill();ctx.stroke();
+  });
+  ctx.strokeStyle='rgba(31,255,31,0.04)';ctx.lineWidth=1;
+  for(var i=0;i<W;i+=14){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke();}
+  for(var i=0;i<H;i+=14){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(W,i);ctx.stroke();}
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='rgba(31,255,31,0.2)';ctx.lineWidth=1.5;ctx.stroke();
+  var ms=r/110,ppx=Math.max(cx-r+6,Math.min(cx+r-6,cx+PX*ms)),ppy=Math.max(cy-r+6,Math.min(cy+r-6,cy-PY*ms));
+  ctx.beginPath();ctx.arc(ppx,ppy,5,0,Math.PI*2);ctx.fillStyle='#1fff1f';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+})();
+
+// TECLADO: movimiento normal + ganzúa si está activa
+var enGanzua = {{ 'true' if p.interaccion and p.interaccion.tipo == 'coche' else 'false' }};
+document.addEventListener('keydown',function(e){
+  if(enGanzua){
+    var gKeys={'w':'w','a':'a','s':'s','d':'d','ArrowUp':'w','ArrowLeft':'a','ArrowDown':'s','ArrowRight':'d'};
+    if(gKeys[e.key]){
+      e.preventDefault();
+      // Animar el botón correspondiente
+      var btn=document.getElementById('lp-'+gKeys[e.key]);
+      if(btn){btn.style.background='var(--green)';btn.style.color='#000';setTimeout(function(){btn.style.background='';btn.style.color='';},150);}
+      location.href='/ganzua_input/'+gKeys[e.key];
+    }
+  } else {
+    {% if not p.enemigo and not p.interaccion and not p.mercader %}
+    var m={ArrowUp:'n',ArrowDown:'s',ArrowRight:'e',ArrowLeft:'o',w:'n',s:'s',d:'e',a:'o'};
+    if(m[e.key]){e.preventDefault();location.href='/mover/'+m[e.key];}
+    {% endif %}
+  }
+});
+</script>
+{% endblock %}
