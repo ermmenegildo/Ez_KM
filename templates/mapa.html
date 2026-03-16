@@ -1,70 +1,318 @@
 {% extends "layout.html" %}
-
 {% block content %}
-<div class="map-container {{ 'mode-night' if es_noche else 'mode-day' }}">
+<style>
+.map-page { max-width:980px; margin:0 auto; }
+.map-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:8px 0; }
+/* Canvas container — fixed height so it never collapses */
+.cv-box { position:relative; overflow:hidden; border:1px solid rgba(31,255,31,.2);
+          background:#020802; width:100%; padding-bottom:100%; /* 1:1 ratio trick */ }
+.cv-box canvas { position:absolute; top:0; left:0; width:100%; height:100%; display:block; }
+.cv-scan { position:absolute; top:0; left:0; width:100%; height:2px;
+           background:rgba(31,255,31,.45); box-shadow:0 0 7px rgba(31,255,31,.6);
+           animation:cv-scan 3s linear infinite; z-index:5; pointer-events:none; }
+@keyframes cv-scan { 0%{top:0} 100%{top:100%} }
+.map-legend { display:flex; flex-wrap:wrap; gap:6px; margin-top:5px; font-size:.8rem; }
+.leg { display:flex; align-items:center; gap:3px; }
+.leg-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+.locs-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); gap:5px; }
+.loc-card { background:rgba(0,5,0,.35); border:1px solid var(--border); padding:7px 8px; }
+.loc-name { color:var(--yellow); font-size:.9rem; margin-bottom:2px; }
+.loc-desc { color:rgba(31,255,31,.4); font-size:.75rem; }
+.loc-coords { color:rgba(31,255,31,.3); font-size:.7rem; }
+.loc-state { font-size:.8rem; margin-top:3px; }
+.stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:8px 0; }
+.stat-tile { background:rgba(0,5,0,.4); border:1px solid var(--border); padding:7px; }
+.stat-tile .slbl { display:block; color:rgba(31,255,31,.4); font-size:.75rem; margin-bottom:2px; }
+.stat-tile .sval { font-size:1rem; }
+.dist-legend { display:grid; grid-template-columns:1fr 1fr; gap:2px; margin-top:5px; font-size:.75rem; }
+.dist-leg-item { display:flex; align-items:center; gap:3px; }
+.dist-leg-color { width:8px; height:8px; border-radius:1px; flex-shrink:0; }
+@media(max-width:640px){ .map-grid{grid-template-columns:1fr;} .stats-grid{grid-template-columns:1fr 1fr;} }
+</style>
+
+<div class="map-page">
+
     <header class="hud-header">
-        <div class="glitch-title" data-text="LOCALIZADOR URBANO">// GPS_CITY_MAP</div>
-        <div class="status-indicator">
-            {% if es_noche %}
-            <span class="blink-red">● ESTADO: NOCHE (PELIGRO CRÍTICO)</span>
-            {% else %}
-            <span class="text-green">● ESTADO: DÍA (EXPLORACIÓN)</span>
-            {% endif %}
-        </div>
+        <div class="glitch-title">// LOCALIZADOR GPS</div>
+        <div>{% if es_noche %}<span class="blink-red">NOCHE</span>{% else %}<span class="text-green">DIA</span>{% endif %}</div>
+        <a href="{{ url_for('juego') }}" class="btn-nav">[ &lt;&lt; PANEL ]</a>
     </header>
 
-    <div class="district-banner">
-        <h2>{{ distrito }}</h2>
-        <p>COORDENADAS ACTUALES: [X: {{ p.x }} | Y: {{ p.y }}]</p>
+    <div style="background:rgba(0,5,0,.4);border:1px solid var(--border);padding:6px 12px;margin:6px 0;">
+        <span style="color:{{ info_distrito.get('color','#1fff1f') }};font-size:1.1rem;">
+            {{ t.get('distritos',{}).get(distrito, distrito) }}
+        </span>
+        <span class="text-dim"> — {{ info_distrito.get('desc','') }}</span>
+        <span class="text-dim" style="margin-left:auto;float:right;">[{{ p.x }},{{ p.y }}]</span>
     </div>
 
-    <div class="radar-viewport">
-        <div class="grid-overlay"></div>
-        <div class="radar-circle">
-            <div class="sweep"></div>
-            
-            <div class="marker you">
-                <div class="icon">▲</div>
-                <div class="label">USTED</div>
+    <div class="map-grid">
+        <!-- RADAR -->
+        <div class="sidebar-section" style="padding:8px;">
+            <h3 style="font-size:.85rem;letter-spacing:2px;color:rgba(31,255,31,.4);margin-bottom:6px;">// RADAR TACTICO</h3>
+            <div class="cv-box">
+                <div class="cv-scan"></div>
+                <canvas id="radar-canvas" width="512" height="512"></canvas>
             </div>
+            <div class="map-legend">
+                <span class="leg"><span class="leg-dot" style="background:#1fff1f"></span>TU</span>
+                <span class="leg"><span style="display:inline-block;width:8px;height:8px;background:#ffdd00;margin-right:2px;"></span>EDIF</span>
+                <span class="leg"><span style="display:inline-block;width:8px;height:8px;background:#00aaff;margin-right:2px;"></span>COCHE</span>
+                <span class="leg"><span class="leg-dot" style="background:#ff3131"></span>ZOMBI</span>
+                <span class="leg"><span class="leg-dot" style="background:#ff0000;width:12px;height:12px;display:inline-block;"></span>JEFE</span>
+                <span class="leg"><span style="display:inline-block;width:8px;height:8px;background:#ffff44;transform:rotate(45deg);margin-right:2px;"></span>LOC</span>
+                <span class="leg"><span class="leg-dot" style="background:#8888ff"></span>MUERTE</span>
+            </div>
+        </div>
 
-            {% set scale = 2 %}
-            {% set off_x = (rx - p.x) * scale %}
-            {% set off_y = (ry - p.y) * scale %}
-            
-            <div class="marker shelter" style="margin-left: {{ off_x }}px; margin-top: {{ -off_y }}px;">
-                <div class="icon-shelter">⌂</div>
-                <div class="label">REFUGIO</div>
+        <!-- MAPA POLÍTICO -->
+        <div class="sidebar-section" style="padding:8px;">
+            <h3 style="font-size:.85rem;letter-spacing:2px;color:rgba(31,255,31,.4);margin-bottom:6px;">// {{ t.get('mapa_politico','MAPA POLITICO') }}</h3>
+            <div class="cv-box">
+                <canvas id="politico-canvas" width="512" height="512"></canvas>
             </div>
+            {% if distritos is defined %}
+            <div class="dist-legend">
+                {% for d_name, d_info in distritos.items() %}
+                <div class="dist-leg-item">
+                    <span class="dist-leg-color" style="background:{{ d_info.color }}"></span>
+                    <span>{{ t.get('distritos',{}).get(d_name, d_name) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
     </div>
 
-    <div class="data-grid">
-        <div class="data-card">
-            <span class="label">REFUGIO MÁS CERCANO:</span>
-            <span class="value">X:{{ rx }} Y:{{ ry }}</span>
-        </div>
-        <div class="data-card">
-            <span class="label">DISTANCIA AL BÚNKER:</span>
-            <span class="value blink">{{ dist_refugio }}m</span>
-        </div>
-        <div class="data-card">
-            <span class="label">TIEMPO PARA CAMBIO:</span>
-            <span class="value">
-                {% if es_noche %}
-                {{ 180 - p.ciclo_pasos }} PASOS PARA AMANECER
-                {% else %}
-                {{ 100 - p.ciclo_pasos }} PASOS PARA OSCURECER
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-tile"><span class="slbl">REFUGIO</span><span class="sval">{{ rx }},{{ ry }}</span></div>
+        <div class="stat-tile"><span class="slbl">DISTANCIA</span><span class="sval blink-red">{{ dist_refugio }}m</span></div>
+        <div class="stat-tile"><span class="slbl">CICLO</span><span class="sval">{% if es_noche %}{{ 180-p.ciclo_pasos }}p→DIA{% else %}{{ 100-p.ciclo_pasos }}p→NOCHE{% endif %}</span></div>
+        <div class="stat-tile"><span class="slbl">GENERADORES</span><span class="sval text-yellow">{{ p.get('generadores_activos',[])|length }}/5</span></div>
+        <div class="stat-tile"><span class="slbl">INFECCION</span><span class="sval {{ 'text-red' if p.get('infeccion',0)>50 else 'text-yellow' if p.get('infeccion',0)>0 else 'text-green' }}">{{ p.get('infeccion',0)|int }}%</span></div>
+        <div class="stat-tile"><span class="slbl">ESCAPE</span><span class="sval text-green">{{ p.get('forma_escape','—') or '—' }}</span></div>
+    </div>
+
+    <!-- LOCALIZACIONES -->
+    {% if locs is defined %}
+    <div class="sidebar-section" style="margin-bottom:8px;">
+        <h3 style="font-size:.85rem;letter-spacing:2px;color:rgba(31,255,31,.4);margin-bottom:7px;">// LOCALIZACIONES ESPECIALES</h3>
+        <div class="locs-grid">
+            {% for lid, loc in locs.items() %}
+            <div class="loc-card">
+                <div class="loc-name">{{ loc.nombre }}</div>
+                <div class="loc-desc">{{ loc.desc }}</div>
+                <div class="loc-coords">[{{ loc.x }},{{ loc.y }}]</div>
+                {% if lid.startswith('central_') %}
+                <div class="loc-state {{ 'text-green' if lid in p.get('generadores_activos',[]) else 'text-red' }}">{{ 'ACTIVO' if lid in p.get('generadores_activos',[]) else 'INACTIVO' }}</div>
+                {% elif lid == 'torre_radio' %}
+                <div class="loc-state {{ 'text-green' if p.get('radio_activa') else 'text-dim' }}">{% if p.get('radio_activa') %}ACTIVA{% else %}{{ p.get('generadores_activos',[])|length }}/5 gen.{% endif %}</div>
+                {% elif lid == 'barco' %}
+                <div class="loc-state text-yellow">{{ p.get('piezas_barco_recogidas',0) }}/4 piezas</div>
+                {% elif lid == 'coche_escape' %}
+                <div class="loc-state text-yellow">{{ p.get('gasolina_coche',0) }}/5 gasolina</div>
                 {% endif %}
-            </span>
+            </div>
+            {% endfor %}
         </div>
     </div>
+    {% endif %}
 
-    <footer class="map-footer">
-        <a href="/juego" class="btn-execute">[ VOLVER AL PANEL DE ACCIÓN ]</a>
-    </footer>
+    <div style="text-align:center;margin-top:8px;padding-bottom:10px;">
+        <a href="{{ url_for('juego') }}" class="btn-execute">[ &lt;&lt; VOLVER ]</a>
+    </div>
 </div>
 
+<script>
+var PX = {{ p.x }}, PY = {{ p.y }};
+var EDIFICIOS = {{ p.edificios_mapa|tojson }};
+var COCHES    = {{ p.get('coches_mapa',[])|tojson }};
+var ENEMIGOS  = {{ p.enemigos_mapa|tojson }};
+var MUERTES   = {{ (p.muertes_mapa|default([]))|tojson }};
+var ZONAS_SEG = {{ (zonas_seguras|default([]))|tojson }};
+var LOCS_DATA = {{ locs.values()|list|tojson if locs is defined else '[]' }};
 
+/* ==== RADAR ==== */
+(function(){
+    var cv = document.getElementById('radar-canvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    /* Always draw at the canvas intrinsic resolution (512x512) */
+    var W = 512, H = 512, CX = 256, CY = 256, SC = 5.0;
+    cv.width = W; cv.height = H;
 
+    function toC(wx,wy){ return [CX+(wx-PX)*SC, CY-(wy-PY)*SC]; }
+
+    function draw(){
+        ctx.clearRect(0,0,W,H);
+
+        /* grid */
+        ctx.strokeStyle='rgba(31,255,31,0.05)'; ctx.lineWidth=1;
+        for(var x=0;x<W;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+        for(var y=0;y<H;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+        /* axes */
+        ctx.strokeStyle='rgba(31,255,31,0.12)';
+        ctx.beginPath();ctx.moveTo(CX,0);ctx.lineTo(CX,H);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(0,CY);ctx.lineTo(W,CY);ctx.stroke();
+
+        /* sweep */
+        var a=(Date.now()/2200)%(Math.PI*2);
+        ctx.save();ctx.translate(CX,CY);ctx.rotate(a);
+        var g=ctx.createLinearGradient(0,0,220,0);
+        g.addColorStop(0,'rgba(31,255,31,0.2)');g.addColorStop(1,'rgba(31,255,31,0)');
+        ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,240,0,Math.PI/4);ctx.closePath();ctx.fill();
+        ctx.restore();
+
+        /* safe zones */
+        ZONAS_SEG.forEach(function(z){
+            var c=toC(z[0],z[1]);
+            ctx.beginPath();ctx.arc(c[0],c[1],SC*3.5,0,Math.PI*2);
+            ctx.fillStyle='rgba(31,255,136,0.07)';ctx.fill();
+            ctx.strokeStyle='rgba(31,255,136,0.3)';ctx.lineWidth=1;ctx.stroke();
+        });
+
+        /* muertes */
+        MUERTES.forEach(function(m){
+            var c=toC(m.x,m.y);
+            ctx.beginPath();ctx.arc(c[0],c[1],7,0,Math.PI*2);
+            ctx.fillStyle='rgba(80,80,220,0.6)';ctx.fill();
+            ctx.strokeStyle='#8888ff';ctx.lineWidth=2;ctx.stroke();
+            ctx.strokeStyle='#8888ff';ctx.lineWidth=1.5;
+            ctx.beginPath();ctx.moveTo(c[0]-6,c[1]);ctx.lineTo(c[0]+6,c[1]);ctx.stroke();
+            ctx.beginPath();ctx.moveTo(c[0],c[1]-6);ctx.lineTo(c[0],c[1]+6);ctx.stroke();
+        });
+
+        /* localizaciones (diamante amarillo) */
+        LOCS_DATA.forEach(function(loc){
+            var c=toC(loc.x,loc.y);
+            ctx.save();ctx.translate(c[0],c[1]);ctx.rotate(Math.PI/4);
+            ctx.fillStyle='rgba(255,255,80,0.85)';ctx.fillRect(-6,-6,12,12);
+            ctx.strokeStyle='#ffff44';ctx.lineWidth=1.5;ctx.strokeRect(-6,-6,12,12);
+            ctx.restore();
+        });
+
+        /* edificios */
+        EDIFICIOS.forEach(function(ed){
+            var c=toC(ed.x,ed.y);
+            ctx.fillStyle=ed.saqueado?'rgba(80,60,0,0.4)':'#ffdd00';
+            ctx.fillRect(c[0]-6,c[1]-6,12,12);
+            if(!ed.saqueado){ctx.strokeStyle='#cc9900';ctx.lineWidth=1.5;ctx.strokeRect(c[0]-6,c[1]-6,12,12);}
+        });
+
+        /* coches */
+        COCHES.forEach(function(c2){
+            var c=toC(c2.x,c2.y);
+            ctx.fillStyle=c2.forzado?'rgba(0,50,100,0.4)':'#00aaff';
+            ctx.fillRect(c[0]-5,c[1]-8,10,14);
+            if(!c2.forzado){ctx.strokeStyle='#0088cc';ctx.lineWidth=1.5;ctx.strokeRect(c[0]-5,c[1]-8,10,14);}
+        });
+
+        /* enemigos */
+        var pulse=(Math.sin(Date.now()/280)+1)/2;
+        ENEMIGOS.forEach(function(z){
+            var c=toC(z.x,z.y);
+            var isJ=z.es_jefe, r=isJ?16:7;
+            ctx.beginPath();ctx.arc(c[0],c[1],r,0,Math.PI*2);
+            ctx.fillStyle=isJ?'#ff0000':'#ff3131';ctx.fill();
+            if(isJ){
+                ctx.beginPath();ctx.arc(c[0],c[1],r+4+pulse*6,0,Math.PI*2);
+                ctx.strokeStyle='rgba(255,0,0,'+(0.55*pulse)+')';ctx.lineWidth=3;ctx.stroke();
+            }
+        });
+
+        /* jugador (triángulo) */
+        ctx.fillStyle='#1fff1f';
+        ctx.beginPath();ctx.moveTo(CX,CY-12);ctx.lineTo(CX-8,CY+8);ctx.lineTo(CX+8,CY+8);ctx.closePath();
+        ctx.fill();ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.stroke();
+        var pg=(Math.sin(Date.now()/450)+1)/2;
+        ctx.beginPath();ctx.arc(CX,CY,18+pg*7,0,Math.PI*2);
+        ctx.strokeStyle='rgba(31,255,31,'+(0.2+0.12*pg)+')';ctx.lineWidth=2;ctx.stroke();
+
+        requestAnimationFrame(draw);
+    }
+    draw();
+})();
+
+/* ==== MAPA POLÍTICO ==== */
+(function(){
+    var cv = document.getElementById('politico-canvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var W=512, H=512, cx=256, cy=256, r=245;
+    cv.width=W; cv.height=H;
+
+    var zones=[
+        {color:'#2ecc71',r0:0,   r1:0.14,a0:0,  a1:360},
+        {color:'#e74c3c',r0:0.14,r1:0.32,a0:0,  a1:360},
+        {color:'#f39c12',r0:0.32,r1:0.64,a0:-45,a1:45 },
+        {color:'#c0392b',r0:0.32,r1:0.64,a0:45, a1:90 },
+        {color:'#16a085',r0:0.32,r1:0.64,a0:90, a1:135},
+        {color:'#1abc9c',r0:0.32,r1:0.64,a0:135,a1:180},
+        {color:'#8e44ad',r0:0.32,r1:0.64,a0:180,a1:225},
+        {color:'#7f8c8d',r0:0.32,r1:0.64,a0:225,a1:270},
+        {color:'#27ae60',r0:0.32,r1:0.64,a0:270,a1:315},
+        {color:'#2980b9',r0:0.64,r1:1.0, a0:0,  a1:360},
+    ];
+
+    /* Draw static political map (no animation needed) */
+    ctx.fillStyle='#020802'; ctx.fillRect(0,0,W,H);
+
+    zones.forEach(function(z){
+        var ri=r*z.r0, ro=r*z.r1;
+        var a0=(z.a0-90)*Math.PI/180, a1=(z.a1-90)*Math.PI/180;
+        ctx.beginPath();
+        if(z.a1-z.a0>=360){
+            ctx.arc(cx,cy,ro,0,Math.PI*2);
+            if(ri>0)ctx.arc(cx,cy,ri,Math.PI*2,0,true);
+        } else {
+            ctx.arc(cx,cy,ro,a0,a1);
+            ctx.arc(cx,cy,ri,a1,a0,true);
+        }
+        ctx.closePath();
+        ctx.fillStyle=z.color+'55'; ctx.strokeStyle=z.color+'99';
+        ctx.lineWidth=2; ctx.fill(); ctx.stroke();
+    });
+
+    /* grid */
+    ctx.strokeStyle='rgba(31,255,31,0.04)'; ctx.lineWidth=1;
+    for(var i=0;i<W;i+=28){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke();}
+    for(var i=0;i<H;i+=28){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(W,i);ctx.stroke();}
+
+    /* border */
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle='rgba(31,255,31,0.3)';ctx.lineWidth=2;ctx.stroke();
+
+    /* localizaciones */
+    var ms=r/125;
+    LOCS_DATA.forEach(function(loc){
+        var px=Math.max(cx-r+12,Math.min(cx+r-12, cx+loc.x*ms));
+        var py=Math.max(cy-r+12,Math.min(cy+r-12, cy-loc.y*ms));
+        ctx.save();ctx.translate(px,py);ctx.rotate(Math.PI/4);
+        ctx.fillStyle='rgba(255,255,80,0.8)';ctx.fillRect(-5,-5,10,10);
+        ctx.restore();
+    });
+
+    /* jugador */
+    var ppx=Math.max(cx-r+10,Math.min(cx+r-10, cx+PX*ms));
+    var ppy=Math.max(cy-r+10,Math.min(cy+r-10, cy-PY*ms));
+    ctx.beginPath();ctx.arc(ppx,ppy,8,0,Math.PI*2);
+    ctx.fillStyle='#1fff1f';ctx.fill();
+    ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.stroke();
+
+    /* pulsing ring on player for mapa politico */
+    function animatePulse(){
+        /* redraw player area only — just overdraw with a ring */
+        ctx.beginPath();ctx.arc(ppx,ppy,8,0,Math.PI*2);
+        ctx.fillStyle='#1fff1f';ctx.fill();
+        ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.stroke();
+        var pg=(Math.sin(Date.now()/450)+1)/2;
+        ctx.beginPath();ctx.arc(ppx,ppy,12+pg*5,0,Math.PI*2);
+        ctx.strokeStyle='rgba(31,255,31,'+(0.25+0.15*pg)+')';ctx.lineWidth=2;ctx.stroke();
+        requestAnimationFrame(animatePulse);
+    }
+    animatePulse();
+})();
+</script>
 {% endblock %}

@@ -1,43 +1,56 @@
 {% extends "layout.html" %}
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-<div class="leaderboard-container">
-    <header class="terminal-header">
-        <h1 class="glitch-title">{{ t.ranking }}</h1>
-        <p class="blink-text">>> ACCEDIENDO A REGISTROS HISTÓRICOS...</p>
+<div style="max-width:800px;margin:0 auto;">
+
+    <header class="hud-header">
+        <h1 class="glitch-title">&gt;&gt; ARCHIVOS_SUPERVIVENCIA.LOG</h1>
+        <a href="{{ url_for('index') }}" class="btn-nav">[ &lt;&lt; VOLVER ]</a>
     </header>
 
-    <div class="data-terminal ranking-box">
-        <table class="class-table">
+    <p class="text-dim" style="margin-bottom:12px;font-size:.9rem;">
+        Registros de los supervivientes del Sector C-7. Ordenados por dias sobrevividos.
+    </p>
+
+    <div class="log-container">
+        {% if scores %}
+        <table class="ranking-table">
             <thead>
                 <tr>
-                    <th>POS</th>
-                    <th>{{ t.nombre }}</th>
-                    <th>{{ t.dias }}</th>
-                    <th>{{ t.reintentar }}</th> </tr>
+                    <th>#</th>
+                    <th>NOMBRE</th>
+                    <th>G/E</th>
+                    <th>DIAS</th>
+                    <th>LVL</th>
+                    <th>TIEMPO</th>
+                    <th>ESCAPE</th>
+                </tr>
             </thead>
             <tbody>
-                {% for entrada in top %}
+                {% for s in scores %}
                 <tr>
-                    <td>#{{ loop.index }}</td>
-                    <td class="highlight">{{ entrada.nombre }}</td>
-                    <td>{{ entrada.dias }}</td>
-                    <td>{{ entrada.puntos }} PTS</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4" style="text-align: center; opacity: 0.5;">-- NO HAY REGISTROS DISPONIBLES --</td>
+                    <td class="{{ 'text-yellow' if loop.first else 'text-dim' }}">#{{ loop.index }}</td>
+                    <td class="{{ 'highlight' if loop.first }}">{{ s.nombre }}</td>
+                    <td class="text-dim" style="font-size:.8rem;">{{ s.get('genero','?') }}/{{ s.get('edad','?') }}</td>
+                    <td class="text-yellow">{{ s.dias }}</td>
+                    <td>LVL {{ s.lvl }}</td>
+                    <td class="text-dim" style="font-size:.8rem;">
+                        {% set seg = s.get('tiempo_seg', 0) %}
+                        {% set hh = (seg // 3600) %}
+                        {% set mm = ((seg % 3600) // 60) %}
+                        {% set ss = (seg % 60) %}
+                        {{ '%02d:%02d:%02d'|format(hh,mm,ss) }}
+                    </td>
+                    <td class="{{ 'text-green' if s.get('forma_escape') not in ('Muerte','',None) else 'text-red' }}" style="font-size:.85rem;">
+                        {{ s.get('forma_escape','Muerte') }}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        {% else %}
+        <p class="text-red">[!] SIN REGISTROS EN EL NUCLEO DE DATOS.</p>
+        {% endif %}
     </div>
 
-    <footer class="index-footer">
-        <a href="/" class="btn-execute" style="text-decoration: none; font-size: 1.5rem;">
-            [ << {{ t.reintentar }} ]
-        </a>
-    </footer>
 </div>
-
 {% endblock %}

@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block content %}
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:20px;">
+
+    <div style="font-size:1.5rem;color:var(--green);letter-spacing:4px;margin-bottom:12px;">&gt;&gt; PROTOCOLO DE ESCAPE EJECUTADO &lt;&lt;</div>
+
+    <h1 style="font-family:'VT323',monospace;font-size:3rem;color:#1fff1f;letter-spacing:8px;margin-bottom:8px;
+               text-shadow:0 0 30px rgba(31,255,31,0.8);">
+        ESCAPE EXITOSO
+    </h1>
+
+    <div style="background:rgba(0,20,0,.6);border:1px solid var(--green);padding:16px 24px;margin:16px 0;font-size:1.1rem;">
+        {% if metodo == 'Helicoptero' %}
+        <div style="color:#00aaff;font-size:1.3rem;margin-bottom:8px;">[ HELICOPTERO ]</div>
+        <p>El helicoptero aterriza en la zona segura. Evacuas la zona contaminada.</p>
+        {% elif metodo == 'Barco' %}
+        <div style="color:#16a085;font-size:1.3rem;margin-bottom:8px;">[ BARCO ]</div>
+        <p>El barco zarpa del Puerto Fluvial. El horizonte se despeja del humo verde.</p>
+        {% elif metodo == 'Coche' %}
+        <div style="color:#f39c12;font-size:1.3rem;margin-bottom:8px;">[ COCHE ]</div>
+        <p>El motor ruge. Dejas el Sector C-7 atras a toda velocidad.</p>
+        {% else %}
+        <div style="color:#1fff1f;font-size:1.3rem;margin-bottom:8px;">[ ESCAPE ]</div>
+        <p>Lograste salir con vida.</p>
+        {% endif %}
+
+        <div style="margin-top:12px;font-size:.9rem;color:rgba(31,255,31,.5);">
+            TIEMPO TOTAL:
+            {% set hh = (tiempo // 3600) %}
+            {% set mm = ((tiempo % 3600) // 60) %}
+            {% set ss = (tiempo % 60) %}
+            <span style="color:var(--green);">{{ '%02d:%02d:%02d'|format(hh,mm,ss) }}</span>
+        </div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+        <a href="{{ url_for('index') }}"       class="btn-execute" style="font-size:1rem;letter-spacing:3px;border-color:#00aa2a;color:#1fff1f;">[ NUEVA PARTIDA ]</a>
+        <a href="{{ url_for('leaderboard') }}" class="btn-execute" style="font-size:1rem;letter-spacing:3px;">[ RANKING ]</a>
+    </div>
+</div>
+{% endblock %}
