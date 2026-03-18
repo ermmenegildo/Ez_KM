@@ -3,17 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ t.titulo|default('ZOMBIE TERMINAL') }}</title>
+    <title>{{ t.titulo|default('CRT SYSTEM') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧟</text></svg>">
 </head>
 <body>
+
+<!-- CONTROLES DE AUDIO -->
+<div class="music-controls" id="music-bar">
+    <span class="music-label">AUDIO</span>
+    <button class="music-btn" id="btn-ambient" onclick="toggleMusic('ambient')" title="Musica ambiente">AMB</button>
+    <button class="music-btn" id="btn-battle"  onclick="toggleMusic('battle')"  title="Musica batalla">BAT</button>
+    <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.3" oninput="setVol(this.value)" title="Volumen">
+</div>
+
 <div id="monitor">
     <div class="scanlines"></div>
     <div class="screen">
         {% block content %}{% endblock %}
     </div>
 </div>
+
+<!-- FOOTER GLOBAL -->
+<footer class="site-footer">
+
+    <!-- Logos -->
+    <div class="sf-logos">
+        <a href="https://kaixomundua.eus" target="_blank" rel="noopener" title="Kaixomundua">
+            <img src="https://kaixomundua.eus/wp-content/uploads/2022/09/KAIXO_MUNDUA_Txuria_Txikia.png"
+                 alt="Kaixomundua" class="sf-logo" onerror="this.style.display='none'">
+        </a>
+        <a href="https://dinahosting.com" target="_blank" rel="noopener" title="dinahosting">
+            <img src="https://kaixomundua.eus/wp-content/uploads/2019/02/logo_dinahosting.png"
+                 alt="dinahosting" class="sf-logo sf-logo-dina" onerror="this.style.display='none'">
+        </a>
+    </div>
+
+    <!-- Info linea -->
+    <div class="sf-info">
+        <span class="sf-item">
+            <a href="mailto:hola@mou5labs.eus" class="sf-link">hola@mou5labs.eus</a>
+        </span>
+        <span class="sf-sep">|</span>
+        <span class="sf-item">
+            <a href="https://github.com/ermmenegildo/Ez_KM" target="_blank" rel="noopener" class="sf-link">GitHub: Ez_KM</a>
+        </span>
+        <span class="sf-sep">|</span>
+        <span class="sf-item sf-cc">
+            &copy; 2026 Mou5Labs &mdash;
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener" class="sf-link">CC BY-NC-SA 4.0</a>
+        </span>
+    </div>
+
+    <div class="sf-ver">CRT SYSTEM v2026 // MOU5LABS</div>
+</footer>
+
+<!-- AUDIO -->
+<audio id="audio-ambient" loop>
+    <source src="{{ url_for('static', filename='audio/ambient.mp3') }}" type="audio/mpeg">
+</audio>
+<audio id="audio-battle" loop>
+    <source src="{{ url_for('static', filename='audio/battle.mp3') }}" type="audio/mpeg">
+</audio>
+
+<script>
+var audioState={ambient:false,battle:false,vol:0.3};
+var ambientAudio=document.getElementById('audio-ambient');
+var battleAudio =document.getElementById('audio-battle');
+if(ambientAudio)ambientAudio.volume=0.3;
+if(battleAudio) battleAudio.volume =0.3;
+function toggleMusic(type){
+    var el=type==='ambient'?ambientAudio:battleAudio;
+    var btn=document.getElementById('btn-'+type);
+    if(!el)return;
+    if(audioState[type]){el.pause();audioState[type]=false;if(btn)btn.classList.remove('music-on');}
+    else{el.play().catch(function(){});audioState[type]=true;if(btn)btn.classList.add('music-on');}
+}
+function setVol(v){
+    audioState.vol=parseFloat(v);
+    if(ambientAudio)ambientAudio.volume=audioState.vol;
+    if(battleAudio) battleAudio.volume =audioState.vol;
+}
+</script>
 </body>
 </html>
- 

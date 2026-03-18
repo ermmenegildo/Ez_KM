@@ -3,59 +3,201 @@
 <div class="index-container">
 
     <nav class="lang-selector">
-        <a href="{{ url_for('set_language', lang='es') }}" class="{{ 'active' if session.lang == 'es' else '' }}">[ ES ]</a>
-        <a href="{{ url_for('set_language', lang='en') }}" class="{{ 'active' if session.lang == 'en' else '' }}">[ EN ]</a>
-        <a href="{{ url_for('set_language', lang='eu') }}" class="{{ 'active' if session.lang == 'eu' else '' }}">[ EU ]</a>
+        <a href="{{ url_for('set_language',lang='es') }}" class="{{ 'active' if session.lang=='es' else '' }}">ES</a> |
+        <a href="{{ url_for('set_language',lang='en') }}" class="{{ 'active' if session.lang=='en' else '' }}">EN</a> |
+        <a href="{{ url_for('set_language',lang='eu') }}" class="{{ 'active' if session.lang=='eu' else '' }}">EU</a>
     </nav>
 
     <header class="terminal-header">
-        <h1 class="glitch-title" data-text="{{ t.titulo }}">{{ t.titulo }}</h1>
-        <div class="status-bar"><span class="blink">></span> {{ t.inicio }}</div>
+        <h1 class="glitch-title">{{ t.titulo }}</h1>
+        <div class="status-bar"><span class="blink">&gt;</span> {{ t.inicio }}</div>
     </header>
 
+    {% set item_tr  = t.objetos if t.objetos  is defined else {} %}
+    {% set clase_tr = t.clases  if t.clases   is defined else {} %}
+
     <form action="/iniciar" method="POST" class="main-form">
-        <div class="input-section">
+
+        <div class="idx-grid">
             <div class="field">
-                <label>> {{ t.nombre }}:</label>
-                <input type="text" name="nombre" placeholder="SUJETO_ID" required autocomplete="off" autofocus maxlength="20">
+                <label>&gt; {{ t.nombre }}:</label>
+                <input type="text" name="nombre" placeholder="SUJETO_ID"
+                       required autocomplete="off" autofocus maxlength="20">
             </div>
             <div class="field">
-                <label>> {{ t.origen }}:</label>
+                <label>&gt; {{ t.genero }}:</label>
+                <select name="genero">
+                    <option value="M">{{ t.get('genero_m','Masculino') }}</option>
+                    <option value="F">{{ t.get('genero_f','Femenino') }}</option>
+                    <option value="NB">{{ t.get('genero_nb','No binario') }}</option>
+                </select>
+            </div>
+            <div class="field field-sm">
+                <label>&gt; {{ t.edad }}:</label>
+                <input type="number" name="edad" value="25" min="1" max="99">
+            </div>
+            <div class="field field-full">
+                <label>&gt; {{ t.lore }}:</label>
+                <input type="text" name="lore"
+                       placeholder="{{ t.lore }}..." maxlength="200">
+            </div>
+            <div class="field field-full">
+                <label>&gt; {{ t.origen }}:</label>
                 <select name="clase" required>
-                    {% for id, stats in clases.items() %}
-                    <option value="{{ id }}">{{ t.clases[id] }} — {{ stats.hp }}HP — {{ stats.item }}</option>
+                    {% for cid, stats in clases.items() %}
+                    <option value="{{ cid }}">
+                        {{ clase_tr.get(cid, cid) }} &mdash; {{ stats.hp }}HP &mdash; {{ item_tr.get(stats.item, stats.item) }}
+                    </option>
                     {% endfor %}
                 </select>
             </div>
         </div>
 
         <div class="data-terminal">
-            <p class="data-title">// {{ t.origen|upper }} DATA_ARCHIVE</p>
-            <table class="class-table">
-                <thead>
-                    <tr><th>{{ t.origen }}</th><th>HP</th><th>ITEM INICIAL</th><th>DESC</th></tr>
-                </thead>
-                <tbody>
-                    {% for id, stats in clases.items() %}
-                    <tr>
-                        <td class="highlight">{{ t.clases[id] }}</td>
-                        <td class="text-yellow">{{ stats.hp }}</td>
-                        <td>{{ stats.item }}</td>
-                        <td class="text-dim" style="font-size:.8rem">{{ stats.get('desc','') }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <p class="data-title">// {{ t.origen|upper }}</p>
+            <div class="class-cards">
+                {% for cid, stats in clases.items() %}
+                <div class="class-card">
+                    <div class="cc-name">{{ clase_tr.get(cid, cid) }}</div>
+                    <div class="cc-row">
+                        <span class="text-yellow">{{ stats.hp }} HP</span>
+                        <span class="text-dim">{{ item_tr.get(stats.item, stats.item) }}</span>
+                    </div>
+                    <div class="cc-bono text-dim">{{ stats.bono }}</div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
 
-        <button type="submit" class="btn-execute" style="font-size:1.2rem;padding:8px 20px;letter-spacing:4px;">
-            > {{ t.boton_inicio }}
+        <button type="submit" class="btn-execute" style="margin-top:10px;">
+            &gt; {{ t.boton_inicio }}
         </button>
     </form>
 
-    <footer class="index-footer">
-        <a href="{{ url_for('leaderboard') }}" class="link-ranking">>> {{ t.ranking }}</a>
-        <div class="sys-info">MOU5LABS // CRT SYSTEM v2026.03</div>
-    </footer>
-</div>
+    <div class="idx-top-footer">
+        <a href="{{ url_for('leaderboard') }}" class="link-ranking">&gt;&gt; {{ t.ranking }}</a>
+        <div class="sys-info">MOU5LABS // CRT SYSTEM v2026</div>
+    </div>
+
+</div>{# end index-container #}
+
+
+{# ═══════════════ FOOTER COMPLETO ═══════════════ #}
+{% set lang = session.lang|default('es') %}
+
+<footer class="full-footer">
+
+    {# LOGOS #}
+    <div class="ff-logos-row">
+        <a href="https://kaixomundua.eus" target="_blank" rel="noopener" title="Kaixomundua">
+            <img src="https://kaixomundua.eus/wp-content/uploads/2022/09/KAIXO_MUNDUA_Txuria_Txikia.png"
+                 alt="Kaixomundua" class="ff-logo" onerror="this.style.display='none'">
+        </a>
+        <a href="https://dinahosting.com" target="_blank" rel="noopener" title="dinahosting">
+            <img src="https://kaixomundua.eus/wp-content/uploads/2019/02/logo_dinahosting.png"
+                 alt="dinahosting" class="ff-logo ff-logo-dina" onerror="this.style.display='none'">
+        </a>
+    </div>
+
+    {# TRES COLUMNAS #}
+    <div class="ff-cols">
+
+        {# COL 1 — MOU5LABS #}
+        <div class="ff-col">
+            <div class="ff-col-title">// MOU5LABS</div>
+            <p class="ff-p">{{ t.get('footer_proyecto','CRT SYSTEM — proyecto de Mou5Labs.') }}</p>
+            <div class="ff-cc">
+                &copy; 2026 Mou5Labs &mdash;
+                <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener" class="ff-link">CC BY-NC-SA 4.0</a>
+                &mdash; {{ t.get('footer_cc','Uso no comercial con atribucion.') }}
+            </div>
+        </div>
+
+                {# COL 2 — CONTACTO #}
+        <div class="ff-col">
+            <div class="ff-col-title">// {{ t.get('contacto','CONTACTO')|upper }}</div>
+            <p class="ff-p">{{ t.get('footer_contacto','Sugerencias, bugs o colaboraciones:') }}</p>
+            <a href="mailto:hola@mou5labs.eus" class="ff-link ff-block">hola@mou5labs.eus</a>
+            <a href="https://github.com/ermmenegildo/Ez_KM" target="_blank" rel="noopener"
+               class="ff-link ff-block" style="margin-top:4px;">github.com/ermmenegildo/Ez_KM</a>
+        </div>
+
+        {# COL 3 — DOCUMENTACION #}
+        <div class="ff-col">
+            <div class="ff-col-title">// {{ t.get('footer_doc_titulo','DOCUMENTACION')|upper }}</div>
+            <ul class="ff-doc">
+                <li><b>Stack:</b> {{ t.get('footer_stack','Python 3 · Flask · Jinja2 · SQLite3') }}</li>
+                <li><b>Frontend:</b> {{ t.get('footer_frontend','JS Canvas · CSS CRT · VT323') }}</li>
+                <li><b>{{ t.get('idioma','Idiomas') }}:</b> {{ t.get('footer_idiomas','ES / EN / EU') }}</li>
+                <li><b>Escape:</b> {{ t.get('footer_escapes','Helicoptero, Barco, Coche') }}</li>
+                <li>{{ t.get('footer_iniciar','python app.py → :5000') }}</li>
+                <li>{{ t.get('footer_audio','/static/audio/ ambient · battle') }}</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <div class="ff-bottom-bar">
+        CRT SYSTEM v2026 &nbsp;|&nbsp; MOU5LABS &nbsp;|&nbsp;
+        POWERED BY
+        <a href="https://dinahosting.com" target="_blank" rel="noopener" class="ff-link">DINAHOSTING</a>
+        &amp;
+        <a href="https://kaixomundua.eus" target="_blank" rel="noopener" class="ff-link">KAIXOMUNDUA.EUS</a>
+    </div>
+
+</footer>
+
+<style>
+/* ── INDEX ── */
+.index-container { max-width:860px; margin:0 auto; padding-bottom:8px; }
+.idx-grid  { display:grid; grid-template-columns:1fr 1fr 90px; gap:10px; margin-bottom:12px; }
+.field-full{ grid-column:1/-1; }
+.field-sm input{ width:70px; }
+.idx-top-footer{ display:flex; justify-content:space-between; align-items:center;
+                 margin-top:10px; flex-wrap:wrap; gap:6px; }
+.link-ranking{ color:var(--green)!important; text-decoration:none; font-size:1rem; }
+.sys-info     { color:rgba(31,255,31,.2); font-size:.8rem; }
+
+/* class cards */
+.class-cards{ display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:6px; margin-top:6px; }
+.class-card { background:rgba(0,8,0,.4); border:1px solid var(--border); padding:7px 9px; }
+.cc-name    { color:#fff; font-size:1rem; text-shadow:0 0 7px var(--green-glow); margin-bottom:3px; }
+.cc-row     { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:2px; font-size:.85rem; }
+.cc-bono    { font-size:.72rem; line-height:1.35; }
+
+/* ── FULL FOOTER ── */
+.full-footer {
+    width:100%; max-width:1400px;
+    border-top:1px solid rgba(31,255,31,.15);
+    background:rgba(0,2,0,.8);
+    padding:16px 22px 10px;
+    margin-top:14px;
+    font-family: var(--font);
+}
+.ff-logos-row { display:flex; align-items:center; gap:20px; margin-bottom:14px; flex-wrap:wrap; }
+.ff-logo      { height:32px; width:auto; opacity:.72; transition:opacity .2s; filter:brightness(1.3); }
+.ff-logo-dina { height:22px; }
+.ff-logo:hover{ opacity:1; }
+.ff-cols      { display:grid; grid-template-columns:1.1fr 1fr 1.1fr; gap:20px; margin-bottom:12px; }
+.ff-col-title { font-size:.78rem; letter-spacing:2px; color:rgba(31,255,31,.4);
+                border-bottom:1px solid rgba(31,255,31,.1); padding-bottom:3px; margin-bottom:6px; }
+.ff-p         { font-size:.79rem; color:rgba(31,255,31,.38); line-height:1.55; margin:0 0 5px; }
+.ff-link      { color:rgba(31,255,31,.62)!important; text-decoration:none; font-size:.8rem; transition:color .15s; }
+.ff-link:hover{ color:var(--green)!important; }
+.ff-block     { display:block; }
+.ff-cc        { font-size:.73rem; color:rgba(31,255,31,.28); line-height:1.6; margin-top:4px; }
+.ff-doc       { list-style:none; padding:0; margin:0; font-size:.77rem; color:rgba(31,255,31,.38); }
+.ff-doc li    { padding:2px 0; }
+.ff-doc code  { background:rgba(31,255,31,.07); padding:1px 4px; border-radius:1px;
+                font-family:var(--font); font-size:.85em; }
+.ff-bottom-bar{ font-size:.7rem; color:rgba(31,255,31,.18); text-align:center;
+                padding-top:7px; border-top:1px solid rgba(31,255,31,.07); }
+
+@media(max-width:640px){
+    .idx-grid    { grid-template-columns:1fr 1fr; }
+    .field-sm    { grid-column:span 2; }
+    .ff-cols     { grid-template-columns:1fr; gap:10px; }
+    .class-cards { grid-template-columns:1fr 1fr; }
+}
+</style>
 {% endblock %}

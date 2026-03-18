@@ -72,13 +72,13 @@
   </div>
   <div class="modal-actions">
     <a href="{{ url_for('atacar',parte='torso') }}" class="btn btn-red modal-action-btn">[ {{ t.get('atacar','ATACAR') }} ]</a>
-    <a href="{{ url_for('recargar') }}"             class="btn btn-yellow modal-action-btn">[ {{ t.get('recargar','RECARGAR') }} ]</a>
+    <a href="{{ url_for('iniciar_recarga') }}"      class="btn btn-yellow modal-action-btn">[ {{ t.get('recargar','RECARGAR') }} ]</a>
     <a href="{{ url_for('huir') }}"                 class="btn modal-action-btn">[ {{ t.get('huir','HUIR') }} ]</a>
   </div>
 
   {# COCHE GANZUA #}
   {% elif p.interaccion and p.interaccion.tipo == 'coche' %}
-  <div class="modal-title text-yellow">// CERRADURA</div>
+  <div class="modal-title text-yellow">// {{ t.get('cerradura','CERRADURA') }}</div>
   <p class="modal-body-text">{{ p.interaccion.msj }}</p>
   <div class="lockpick-container">
     <div class="lp-combo-label">SECUENCIA:</div>
@@ -108,8 +108,8 @@
   <p class="modal-body-text">{{ p.interaccion.desc }}</p>
   {% set lid = p.interaccion.loc_id %}
   <div class="modal-actions">
-    <a href="{{ url_for('entrar_loc_especial') }}" class="btn btn-yellow modal-action-btn">[ ENTRAR ]</a>
-    <a href="{{ url_for('ignorar_loc_especial') }}" class="btn modal-action-btn">[ IGNORAR ]</a>
+    <a href="{{ url_for('entrar_loc_especial') }}" class="btn btn-yellow modal-action-btn">[ {{ t.get('entrar','ENTRAR') }} ]</a>
+    <a href="{{ url_for('ignorar_loc_especial') }}" class="btn modal-action-btn">[ {{ t.get('ignorar','IGNORAR') }} ]</a>
   </div>
 
   {# SUPERVIVIENTE #}
@@ -127,7 +127,7 @@
 
   {# CADAVER #}
   {% elif p.interaccion and p.interaccion.tipo == 'cadaver' %}
-  <div class="modal-title text-yellow">// CADAVER</div>
+  <div class="modal-title text-yellow">// {{ t.get('ev_cadaver','CADAVER') }}</div>
   <p class="modal-body-text">{{ p.interaccion.msj }}</p>
   <div style="font-size:.9rem;margin-bottom:8px;">{% for it in p.interaccion.loot %}<span class="mat-chip">{{ t.objetos.get(it,it) if t.objetos is defined else it }}</span>{% endfor %}</div>
   <div class="modal-actions">
@@ -135,31 +135,31 @@
     <a href="{{ url_for('ignorar_cadaver') }}"   class="btn modal-action-btn">[ {{ t.get('ignorar','IGNORAR') }} ]</a>
   </div>
   <div class="modal-actions" style="margin-top:4px;">
-    <a href="{{ url_for('usar_item',item='Carne de Cadaver') }}" class="btn btn-red modal-action-btn" onclick="return confirm('Comer el cadaver? Riesgo de enfermedad.')">[ COMER (RIESGO) ]</a>
+    <a href="{{ url_for('usar_item',item='Carne de Cadaver') }}" class="btn btn-red modal-action-btn" onclick="return confirm('Comer el cadaver? Riesgo de enfermedad.')">[ {{ t.get('comer_riesgo','COMER (RIESGO)') }} ]</a>
   </div>
 
   {# TRAMPA #}
   {% elif p.interaccion and p.interaccion.tipo == 'trampa' %}
-  <div class="modal-title blink-red">// TRAMPA</div>
+  <div class="modal-title blink-red">// {{ t.get('ev_trampa','TRAMPA') }}</div>
   <p class="modal-body-text">{{ p.interaccion.msj }}</p>
   <div class="modal-actions">
-    <a href="{{ url_for('evitar_trampa') }}"       class="btn btn-yellow modal-action-btn">[ RODEAR ]</a>
-    <a href="{{ url_for('ignorar_interaccion') }}" class="btn btn-red modal-action-btn">[ PISAR ]</a>
+    <a href="{{ url_for('evitar_trampa') }}"       class="btn btn-yellow modal-action-btn">[ {{ t.get('rodear','RODEAR') }} ]</a>
+    <a href="{{ url_for('ignorar_interaccion') }}" class="btn btn-red modal-action-btn">[ {{ t.get('pisar','PISAR') }} (-{{ p.interaccion.dano }}HP) ]</a>
   </div>
 
   {# EDIFICIO #}
   {% elif p.interaccion and p.interaccion.tipo == 'edificio' %}
-  <div class="modal-title text-yellow">// EDIFICIO</div>
+  <div class="modal-title text-yellow">// {{ t.get('edificio','EDIFICIO') }}</div>
   <p class="modal-body-text">{{ p.interaccion.msj }}</p>
   {% if p.interaccion.zombis %}<p class="blink-red">[!] SENAL BIOLOGICA</p>{% else %}<p class="text-green">[OK] DESPEJADO</p>{% endif %}
   <div class="modal-actions">
-    <a href="{{ url_for('entrar_edificio') }}"  class="btn btn-yellow modal-action-btn">[ ENTRAR ]</a>
+    <a href="{{ url_for('entrar_edificio') }}"  class="btn btn-yellow modal-action-btn">[ {{ t.get('entrar','ENTRAR') }} ]</a>
     <a href="{{ url_for('ignorar_edificio') }}" class="btn modal-action-btn">[ {{ t.get('ignorar','IGNORAR') }} ]</a>
   </div>
 
   {# RECARGA MINIJUEGO #}
   {% elif p.interaccion and p.interaccion.tipo == 'recarga' %}
-  <div class="modal-title text-yellow">// RECARGAR — {{ p.interaccion.arma }}</div>
+  <div class="modal-title text-yellow">// {{ t.get('recargar','RECARGAR') }} — {{ t.objetos.get(p.interaccion.arma,p.interaccion.arma) if t.objetos is defined else p.interaccion.arma }}</div>
   <p class="modal-body-text">{{ p.interaccion.msj }}</p>
   <div class="lockpick-container">
     <div class="lp-combo-label">SECUENCIA:</div>
@@ -184,7 +184,7 @@
 
   {# ESCALAR TORRE #}
   {% elif p.interaccion and p.interaccion.tipo == 'escalar_torre' %}
-  <div class="modal-title text-yellow">// ESCALANDO TORRE DE RADIO</div>
+  <div class="modal-title text-yellow">// {{ t.get('radio_tower','TORRE DE RADIO') }}</div>
   <p class="modal-body-text">{{ p.interaccion.msj }}</p>
   <div class="tower-climb">
     <div class="tower-progress">
@@ -221,7 +221,7 @@
 
   {# INTERIOR EXPLORACIÓN #}
   {% elif p.interaccion and p.interaccion.tipo == 'interior' %}
-  <div class="modal-title text-yellow">// EXPLORACION INTERIOR</div>
+  <div class="modal-title text-yellow">// {{ t.get('explorar','EXPLORAR') }}</div>
   <p class="modal-body-text">{{ p.interaccion.msj }}</p>
   <div class="interior-rooms">
     {% for hab in p.interaccion.habitaciones %}
@@ -240,7 +240,7 @@
     {% endfor %}
   </div>
   <div class="modal-actions" style="margin-top:8px;">
-    <a href="{{ url_for('salir_interior') }}" class="btn modal-action-btn">[ SALIR DEL EDIFICIO ]</a>
+    <a href="{{ url_for('salir_interior') }}" class="btn modal-action-btn">[ {{ t.get('salir_edificio','SALIR') }} ]</a>
   </div>
 
   {# NPC DIÁLOGO COMPLETO #}
@@ -305,7 +305,7 @@
     </div>
     <div class="hud-box hud-center">
       <div class="hud-district">// {{ t.get('distritos',{}).get(distrito,distrito) }}</div>
-      <div class="hud-time {{ 'blink-red' if es_noche }}">{{ 'NOCHE' if es_noche else 'DIA' }}</div>
+      <div class="hud-time {{ 'blink-red' if es_noche }}">{{ t.get('noche_text','NOCHE') if es_noche else t.get('dia_text','DIA') }}</div>
     </div>
     <div class="hud-box hud-right" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <span><span class="lbl">CC</span><span class="val cc-val">{{ p.dinero }}</span> <span class="lbl">D</span><span class="val dias-val">{{ p.dias }}</span></span>
@@ -327,7 +327,7 @@
 
   {# LOG #}
   <div class="terminal">
-    <p class="log-line">&gt; {{ p.log }}</p>
+    <p class="log-line">&gt; {{ t.get(p.log, p.log) }}</p>
     {% if p.hambre < 20 %}<p class="log-line log-alert">!! {{ t.get('hambre','NUTRICION') }} CRITICA !!</p>{% endif %}
     {% if p.hp < (p.max_hp*0.25)|int %}<p class="log-line log-alert">!! HP CRITICO !!</p>{% endif %}
   </div>
@@ -342,24 +342,24 @@
       <a href="/mover/e" class="btn nav-btn east">E</a>
       <a href="/mover/s" class="btn nav-btn south">S</a>
     </div>
-    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;justify-content:center;">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:100%;">
       <a href="{{ url_for('dormir') }}" class="btn btn-sm {{ 'btn-yellow' if es_noche }}">[ {{ t.get('dormir','DORMIR') }}{% if es_noche %} (NOCHE){% endif %} ]</a>
-      {% if 'campista' in p.skills and not p.campamento %}
+      {% if 'campista' in p.get('skills',[]) and not p.campamento %}
       <a href="{{ url_for('construir_campamento') }}" class="btn btn-sm">[ {{ t.get('campamento','CAMPAMENTO') }} ]</a>
       {% elif p.campamento %}
-      <span class="text-green" style="font-size:.85rem;">CAMP [{{ p.campamento.x }},{{ p.campamento.y }}]</span>
+      <span class="text-green" style="font-size:.85rem;">{{ t.get('campamento','CAMP') }} [{{ p.campamento.x }},{{ p.campamento.y }}]</span>
       {% endif %}
       {% if zona_segura is defined and zona_segura %}
       <button class="btn btn-sm btn-blue" onclick="startDino()">[ {{ t.get('viaje_rapido','VIAJE RAPIDO') }} ]</button>
       {% endif %}
-      <a href="{{ url_for('suicidio') }}" class="btn btn-sm btn-red" onclick="return confirm('Seguro?')">[ {{ t.get('suicidio','TERMINAR') }} ]</a>
+      <a href="{{ url_for('suicidio') }}" class="btn btn-sm btn-red" onclick="return confirm(CONF_SUICIDIO)">[ {{ t.get('suicidio','TERMINAR') }} ]</a>
     </div>
     {# CAMPAMENTO UI #}
     {% if p.campamento %}
     <div class="camp-panel">
       <span class="text-green" style="font-size:.85rem;">[ CAMPAMENTO {{ p.campamento.x }},{{ p.campamento.y }} ]</span>
       {% if not p.campamento.granja %}
-        {% if 'agricultura' in p.skills %}<a href="{{ url_for('construir_granja') }}" class="btn btn-sm" style="margin-left:6px;">[ GRANJA ]</a>{% endif %}
+        {% if 'agricultura' in p.get('skills',[]) %}<a href="{{ url_for('construir_granja') }}" class="btn btn-sm" style="margin-left:6px;">[ GRANJA ]</a>{% endif %}
       {% else %}
         <a href="{{ url_for('cosechar_granja') }}" class="btn btn-sm btn-yellow" style="margin-left:6px;">[ COSECHAR ]</a>
       {% endif %}
@@ -368,51 +368,52 @@
     {# NPCS CERCANOS #}
     {% if npcs %}
     <div class="npc-panel">
-      <span class="text-dim" style="font-size:.75rem;">NPCS:</span>
+      <span class="text-dim" style="font-size:.75rem;">NPC:</span>
       {% for npc in npcs %}
       <a href="{{ url_for('hablar_npc', npc_id=npc.id) }}" class="btn btn-sm btn-blue" style="margin-left:4px;">{{ npc.nombre }}</a>
       {% endfor %}
     </div>
     {% endif %}
     {% else %}
-    <div class="waiting-notice blink-red">&gt; EVENTO ACTIVO</div>
+    <div class="waiting-notice blink-red">&gt; {{ t.get('evento_activo','EVENTO ACTIVO') }}</div>
     {% endif %}
   </div>
 
+  {# ─────────────────────────────────────── #}
   {# ESCAPE PROGRESS #}
   {% set gen_n = p.get('generadores_activos',[])|length %}
   {% if gen_n > 0 or p.get('piezas_barco_recogidas',0) > 0 or p.get('gasolina_coche',0) > 0 %}
   <div class="escape-progress">
-    <div class="escape-title">// PROGRESO DE ESCAPE</div>
+    <div class="escape-title">// {{ t.get('progreso_escape','PROGRESO DE ESCAPE') }}</div>
     {% if p.get('gasolina_coche',0) > 0 %}
-    <div class="escape-row"><span>COCHE</span><span class="text-yellow">{{ p.gasolina_coche }}/5 gasolina</span></div>
+    <div class="escape-row"><span>{{ t.get("escape_coche","COCHE") }}</span><span class="text-yellow">{{ p.gasolina_coche }}/5 gasolina</span></div>
     {% endif %}
     {% if p.get('piezas_barco_recogidas',0) > 0 %}
-    <div class="escape-row"><span>BARCO</span><span class="text-yellow">{{ p.piezas_barco_recogidas }}/4 piezas</span></div>
+    <div class="escape-row"><span>{{ t.get("escape_barco","BARCO") }}</span><span class="text-yellow">{{ p.piezas_barco_recogidas }}/4 piezas</span></div>
     {% endif %}
     {% if gen_n > 0 %}
-    <div class="escape-row"><span>GENERADORES</span><span class="text-yellow">{{ gen_n }}/5</span></div>
+    <div class="escape-row"><span>{{ t.get("generadores","GENERADORES") }}</span><span class="text-yellow">{{ gen_n }}/5</span></div>
     {% endif %}
     {% if p.get('radio_activa') %}
-    <div class="escape-row blink-green"><span>RADIO</span><span class="text-green">ACTIVA</span></div>
+    <div class="escape-row blink-green"><span>{{ t.get("radio_tower","RADIO") }}</span><span class="text-green">{{ t.get("activa","ACTIVA") }}</span></div>
     {% endif %}
   </div>
   {% endif %}
 
   {# TABS #}
-  <div class="tabs-section">
+  <div class="tabs-section" style="min-height:0;">
     <div class="tab-bar">
       <button class="tab-btn active" onclick="showTab('inv',this)">{{ t.get('mochila','MOCHILA') }}</button>
       <button class="tab-btn"        onclick="showTab('equip',this)">{{ t.get('ekipamendua', t.get('equipar','EQUIPO')) if session.lang=='eu' else 'EQUIPO' }}</button>
-      <button class="tab-btn"        onclick="showTab('estado',this)">ESTADO</button>
+      <button class="tab-btn"        onclick="showTab('estado',this)">{{ t.get('estado','ESTADO') }}</button>
       <button class="tab-btn"        onclick="showTab('craft',this)">{{ t.get('crafteo','CRAFTEO') }}</button>
       <button class="tab-btn"        onclick="showTab('habs',this)">{{ t.get('habilidades','HABILIDADES') }}</button>
     </div>
 
     {# INVENTARIO #}
     <div id="tab-inv" class="tab-pane active">
-      <div class="tab-meta">SLOTS <span class="val">{{ p.inventario|length }}/{{ p.max_inventario }}</span></div>
-      {% if not p.inventario %}<p class="empty-msg">&gt; {{ t.get('mochila','MOCHILA') }} VACIA</p>
+      <div class="tab-meta">{{ t.get('slots','SLOTS') }} <span class="val">{{ p.inventario|length }}/{{ p.max_inventario }}</span></div>
+      {% if not p.inventario %}<p class="empty-msg">&gt; {{ t.get('mochila_vacia','MOCHILA VACIA') }}</p>
       {% else %}<ul class="inv-list">
         {% for item in p.inventario %}
         <li class="inv-row">
@@ -473,7 +474,7 @@
     {# ESTADO: infección, enfermedades #}
     <div id="tab-estado" class="tab-pane">
       <div class="infection-block">
-        <div class="inf-title">// INFECCION ZOMBI</div>
+        <div class="inf-title">// {{ t.get('infectado','INFECCION') }}</div>
         {% set inf=(p.get('infeccion',0))|int %}
         <div class="inf-bar-wrap">
           <div class="inf-bar"><div class="inf-fill" style="width:{{ inf }}%;background:{{ '#ff3131' if inf>70 else '#ff8800' if inf>40 else '#f1c40f' }};"></div></div>
@@ -484,7 +485,7 @@
         {% elif inf>=75 %}<div class="inf-status blink-red">&gt; CRITICO — USA VIAL YA</div>
         {% else %}<div class="inf-status text-red">&gt; INFECTADO</div>{% endif %}
       </div>
-      <div class="inf-title" style="margin-top:10px;">// ENFERMEDADES</div>
+      <div class="inf-title" style="margin-top:10px;">// {{ t.get('enfermedades','ENFERMEDADES') }}</div>
       {% set enfs=p.get('enfermedades_activas',{}) %}
       {% if not enfs %}<div class="text-green" style="font-size:.9rem;">&gt; Sin enfermedades</div>
       {% else %}{% for eid,ed in enfs.items() %}{% set ei=enfermedades.get(eid,{}) %}
@@ -498,8 +499,7 @@
       <div class="mats-section">
         <div class="mats-title">{{ t.get('materiales','MATERIALES') }}:</div>
         <div class="mat-chips">
-          {% set mc={} %}{% for it in p.inventario %}{% if mc.update({it:mc.get(it,0)+1}) %}{% endif %}{% endfor %}
-          {% for it,cnt in mc.items() %}<span class="mat-chip">{{ t.objetos.get(it,it) if t.objetos is defined else it }} x{{ cnt }}</span>{% endfor %}
+          {% for it in p.inventario|unique %}<span class="mat-chip">{{ t.objetos.get(it,it) if t.objetos is defined else it }} x{{ p.inventario|select("equalto",it)|list|length }}</span>{% endfor %}
           {% if not p.inventario %}<span class="text-dim">Sin materiales</span>{% endif %}
         </div>
       </div>
@@ -508,7 +508,7 @@
       {% for mat,cnt in rec.ingredientes %}{% if p.inventario.count(mat)<cnt %}{% set can.ok=False %}{% endif %}{% endfor %}
       <div class="recipe-card {{ 'recipe-ok' if can.ok }}">
         <div class="recipe-name">{{ t.objetos.get(rid,rid) if t.objetos is defined else rid }}</div>
-        <div class="recipe-desc">{{ rec.desc }}{% if rec.get('requiere_campamento') and not p.campamento %} <span class="text-red">[CAMPAMENTO REQ]</span>{% endif %}</div>
+        <div class="recipe-desc">{{ recetas_desc.get(rid, rec.desc) if recetas_desc is defined else rec.desc }}{% if rec.get('requiere_campamento') and not p.campamento %} <span class="text-red">[CAMPAMENTO REQ]</span>{% endif %}</div>
         <div class="recipe-ings">
           {% for mat,cnt in rec.ingredientes %}{% set have=p.inventario.count(mat) %}<span class="{{ 'ing-ok' if have>=cnt else 'ing-no' }}">{{ cnt }}x {{ t.objetos.get(mat,mat) if t.objetos is defined else mat }}({{ have }})</span>{% endfor %}
         </div>
@@ -520,17 +520,35 @@
       {% endfor %}
     </div>
 
-    {# HABILIDADES #}
+    {# HABILIDADES — traducidas via t.habs #}
     <div id="tab-habs" class="tab-pane">
       <div class="tab-meta">SP: <span class="sp-val">{{ p.sp }}</span></div>
+      {% set t_habs = t.get('habs', {}) %}
       {% for cat_id,cat_lbl in [('combate',t.get('cat_combate','COMBATE')),('supervivencia',t.get('cat_supervivencia','SUPERVIVENCIA')),('recursos',t.get('cat_recursos','RECURSOS')),('exploracion',t.get('cat_exploracion','EXPLORACION'))] %}
       <div class="sk-cat sk-cat-{{ cat_id }}">
         <div class="sk-cat-title">// {{ cat_lbl }}</div>
         {% for hid,hab in habs.items() if hab.cat==cat_id %}
-        {% set tiene=hid in p.skills %}{% set req_ok=not hab.req or hab.req in p.skills %}{% set buyable=not tiene and req_ok and p.sp>=hab.coste %}
+        {% set sk = p.get('skills',[]) %}
+        {% set tiene   = hid in sk %}
+        {% set req_ok  = not hab.req or hab.req in sk %}
+        {% set buyable = not tiene and req_ok and p.sp>=hab.coste %}
+        {% set h_tr    = t_habs.get(hid, {}) %}
+        {% set h_nom   = h_tr.get('nombre', hab.nombre) %}
+        {% set h_desc  = h_tr.get('desc',   hab.desc)   %}
+        {% set req_nom = t_habs.get(hab.req,{}).get('nombre', habs[hab.req].nombre if hab.req and hab.req in habs else hab.req) if hab.req else '' %}
         <div class="sk-row {{ 'sk-owned' if tiene else ('sk-buyable' if buyable else 'sk-locked') }} {{ 'sk-indent' if hab.req }}">
-          <div class="sk-info"><span class="sk-state">{{ '[OK]' if tiene else '[ ] ' if req_ok else '[X] ' }}</span><span class="sk-name">{{ hab.nombre }}</span><span class="sk-dash"> — </span><span class="sk-desc">{{ hab.desc }}</span>{% if hab.req and not tiene %}<span class="sk-req"> REQ:{{ habs[hab.req].nombre if hab.req in habs else hab.req }}</span>{% endif %}</div>
-          <div class="sk-btn">{% if tiene %}<span class="text-green">OK</span>{% elif buyable %}<a href="{{ url_for('comprar_habilidad',hab_id=hid) }}" class="btn btn-yellow btn-sm">{{ hab.coste }}SP</a>{% else %}<span class="text-dim">{{ hab.coste }}SP</span>{% endif %}</div>
+          <div class="sk-info">
+            <span class="sk-state">{{ '[OK]' if tiene else '[ ] ' if req_ok else '[X] ' }}</span>
+            <span class="sk-name">{{ h_nom }}</span>
+            <span class="sk-dash"> — </span>
+            <span class="sk-desc">{{ h_desc }}</span>
+            {% if hab.req and not tiene %}<span class="sk-req"> REQ: {{ req_nom }}</span>{% endif %}
+          </div>
+          <div class="sk-btn">
+            {% if tiene %}<span class="text-green">OK</span>
+            {% elif buyable %}<a href="{{ url_for('comprar_habilidad',hab_id=hid) }}" class="btn btn-yellow btn-sm">{{ hab.coste }}SP</a>
+            {% else %}<span class="text-dim">{{ hab.coste }}SP</span>{% endif %}
+          </div>
         </div>
         {% endfor %}
       </div>
@@ -540,9 +558,9 @@
   </div>
 
   <nav class="bottom-nav">
-    <a href="{{ url_for('mapa') }}" class="btn-nav">[ MAPA ]</a>
+    <a href="{{ url_for('mapa') }}" class="btn-nav">[ {{ t.get('mapa_politico','MAPA') }} ]</a>
     <a href="{{ url_for('leaderboard') }}" class="btn-nav">[ {{ t.get('ranking','RANKING') }} ]</a>
-    <a href="{{ url_for('index') }}" class="btn-nav" onclick="return confirm('Salir?')">[ SALIR ]</a>
+    <a href="{{ url_for('index') }}" class="btn-nav" onclick="return confirm(CONF_SALIR)">[ {{ t.get('salir','SALIR') }} ]</a>
   </nav>
 
 </div>
@@ -564,7 +582,7 @@
 
   <div class="sidebar-section">
     <h3>// RADAR</h3>
-    <div class="radar-wrap"><div class="scan-line"></div><canvas id="radar-canvas" width="256" height="170"></canvas></div>
+    <div class="radar-wrap" style="height:170px;"><div class="scan-line"></div><canvas id="radar-canvas" width="256" height="170" style="width:256px;height:170px;display:block;"></canvas></div>
     <div class="map-legend">
       <span class="leg"><span class="leg-dot" style="background:#1fff1f"></span>TU</span>
       <span class="leg"><span style="display:inline-block;width:8px;height:8px;background:#ffdd00;margin-right:2px;"></span>EDIF</span>
@@ -577,7 +595,7 @@
 
   <div class="sidebar-section">
     <h3>// {{ t.get('mapa_politico','MAPA') }}</h3>
-    <canvas id="politico-canvas" width="256" height="170"></canvas>
+    <canvas id="politico-canvas" width="256" height="170" style="width:256px;height:170px;display:block;"></canvas>
     {% if distritos is defined %}<div class="dist-legend">{% for d_name,d_info in distritos.items() %}<div class="dist-leg-item"><span class="dist-leg-color" style="background:{{ d_info.color }}"></span><span>{{ t.get('distritos',{}).get(d_name,d_name) }}</span></div>{% endfor %}</div>{% endif %}
   </div>
 </aside>
@@ -618,47 +636,169 @@ var ZONAS_SEG={{(zonas_seguras|default([]))|tojson}};
 var LOCS={{ locs.values()|list|tojson if locs is defined else '[]' }};
 var JEFE_SPAWN={{('true' if p.get('jefe_spawn') else 'false')}};
 
-// RADAR
+// ── RADAR SIDEBAR ──────────────────────────────────────────
 (function(){
-  var cv=document.getElementById('radar-canvas'); if(!cv)return;
-  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height,CX=W/2,CY=H/2,SC=2.8;
-  function toC(wx,wy){return[CX+(wx-PX)*SC,CY-(wy-PY)*SC];}
+  var cv = document.getElementById('radar-canvas');
+  if(!cv) return;
+  // Force intrinsic pixel dimensions
+  cv.width  = 256;
+  cv.height = 170;
+  var ctx = cv.getContext('2d');
+  var W=256, H=170, CX=128, CY=85, SC=2.6;
+
+  function toC(wx,wy){ return [CX+(wx-PX)*SC, CY-(wy-PY)*SC]; }
+  function inBounds(c){ return c[0]>-8&&c[0]<W+8&&c[1]>-8&&c[1]<H+8; }
+
   function draw(){
-    ctx.clearRect(0,0,W,H);
-    ctx.strokeStyle='rgba(31,255,31,0.05)';ctx.lineWidth=1;
+    ctx.fillStyle='#020802'; ctx.fillRect(0,0,W,H);
+
+    // Grid
+    ctx.strokeStyle='rgba(31,255,31,0.05)'; ctx.lineWidth=1;
     for(var x=0;x<W;x+=16){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
     for(var y=0;y<H;y+=16){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
     ctx.strokeStyle='rgba(31,255,31,0.1)';
     ctx.beginPath();ctx.moveTo(CX,0);ctx.lineTo(CX,H);ctx.stroke();
     ctx.beginPath();ctx.moveTo(0,CY);ctx.lineTo(W,CY);ctx.stroke();
+
+    // Sweep
     var a=(Date.now()/2200)%(Math.PI*2);
     ctx.save();ctx.translate(CX,CY);ctx.rotate(a);
-    var g=ctx.createLinearGradient(0,0,85,0);g.addColorStop(0,'rgba(31,255,31,0.14)');g.addColorStop(1,'rgba(31,255,31,0)');
-    ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,100,0,Math.PI/4);ctx.closePath();ctx.fill();ctx.restore();
-    ZONAS_SEG.forEach(function(z){var c=toC(z[0],z[1]);ctx.beginPath();ctx.arc(c[0],c[1],SC*3.5,0,Math.PI*2);ctx.fillStyle='rgba(31,255,136,0.07)';ctx.fill();ctx.strokeStyle='rgba(31,255,136,0.28)';ctx.lineWidth=1;ctx.stroke();});
-    MUERTES.forEach(function(m){var c=toC(m.x,m.y);if(c[0]<-5||c[0]>W+5||c[1]<-5||c[1]>H+5)return;ctx.beginPath();ctx.arc(c[0],c[1],5,0,Math.PI*2);ctx.fillStyle='rgba(80,80,220,0.6)';ctx.fill();ctx.strokeStyle='#8888ff';ctx.lineWidth=1.5;ctx.stroke();ctx.strokeStyle='#8888ff';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(c[0]-4,c[1]);ctx.lineTo(c[0]+4,c[1]);ctx.stroke();ctx.beginPath();ctx.moveTo(c[0],c[1]-4);ctx.lineTo(c[0],c[1]+4);ctx.stroke();});
-    EDIFICIOS.forEach(function(ed){var c=toC(ed.x,ed.y);if(c[0]<-5||c[0]>W+5||c[1]<-5||c[1]>H+5)return;ctx.fillStyle=ed.saqueado?'rgba(80,60,0,0.5)':'#ffdd00';ctx.fillRect(c[0]-4,c[1]-4,8,8);if(!ed.saqueado){ctx.strokeStyle='#cc9900';ctx.lineWidth=1;ctx.strokeRect(c[0]-4,c[1]-4,8,8);}});
-    COCHES.forEach(function(c2){var c=toC(c2.x,c2.y);if(c[0]<-5||c[0]>W+5||c[1]<-5||c[1]>H+5)return;ctx.fillStyle=c2.forzado?'rgba(0,50,100,0.4)':'#00aaff';ctx.fillRect(c[0]-3,c[1]-5,6,9);if(!c2.forzado){ctx.strokeStyle='#0088cc';ctx.lineWidth=1;ctx.strokeRect(c[0]-3,c[1]-5,6,9);}});
-    // Localizaciones especiales (diamantes verdes)
-    LOCS.forEach(function(loc){var c=toC(loc.x,loc.y);if(c[0]<-5||c[0]>W+5||c[1]<-5||c[1]>H+5)return;ctx.save();ctx.translate(c[0],c[1]);ctx.rotate(Math.PI/4);ctx.fillStyle='rgba(255,255,100,0.8)';ctx.fillRect(-4,-4,8,8);ctx.strokeStyle='#ffff00';ctx.lineWidth=1;ctx.strokeRect(-4,-4,8,8);ctx.restore();});
+    var g=ctx.createLinearGradient(0,0,90,0);
+    g.addColorStop(0,'rgba(31,255,31,0.18)');g.addColorStop(1,'rgba(31,255,31,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,110,0,Math.PI/4);ctx.closePath();ctx.fill();
+    ctx.restore();
+
+    // Safe zones
+    ZONAS_SEG.forEach(function(z){
+      var c=toC(z[0],z[1]);
+      ctx.beginPath();ctx.arc(c[0],c[1],SC*3.5,0,Math.PI*2);
+      ctx.fillStyle='rgba(31,255,136,0.07)';ctx.fill();
+      ctx.strokeStyle='rgba(31,255,136,0.3)';ctx.lineWidth=1;ctx.stroke();
+    });
+
+    // Deaths
+    MUERTES.forEach(function(m){
+      var c=toC(m.x,m.y);if(!inBounds(c))return;
+      ctx.beginPath();ctx.arc(c[0],c[1],5,0,Math.PI*2);
+      ctx.fillStyle='rgba(80,80,220,0.6)';ctx.fill();
+      ctx.strokeStyle='#8888ff';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.strokeStyle='#8888ff';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(c[0]-4,c[1]);ctx.lineTo(c[0]+4,c[1]);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(c[0],c[1]-4);ctx.lineTo(c[0],c[1]+4);ctx.stroke();
+    });
+
+    // Localizaciones (diamond)
+    LOCS.forEach(function(loc){
+      var c=toC(loc.x,loc.y);if(!inBounds(c))return;
+      ctx.save();ctx.translate(c[0],c[1]);ctx.rotate(Math.PI/4);
+      ctx.fillStyle='rgba(255,255,80,0.85)';ctx.fillRect(-4,-4,8,8);
+      ctx.strokeStyle='#ffff44';ctx.lineWidth=1;ctx.strokeRect(-4,-4,8,8);
+      ctx.restore();
+    });
+
+    // Buildings
+    EDIFICIOS.forEach(function(ed){
+      var c=toC(ed.x,ed.y);if(!inBounds(c))return;
+      ctx.fillStyle=ed.saqueado?'rgba(80,60,0,0.4)':'#ffdd00';
+      ctx.fillRect(c[0]-4,c[1]-4,8,8);
+      if(!ed.saqueado){ctx.strokeStyle='#cc9900';ctx.lineWidth=1;ctx.strokeRect(c[0]-4,c[1]-4,8,8);}
+    });
+
+    // Cars
+    COCHES.forEach(function(c2){
+      var c=toC(c2.x,c2.y);if(!inBounds(c))return;
+      ctx.fillStyle=c2.forzado?'rgba(0,50,100,0.35)':'#00aaff';
+      ctx.fillRect(c[0]-3,c[1]-5,6,9);
+      if(!c2.forzado){ctx.strokeStyle='#0088cc';ctx.lineWidth=1;ctx.strokeRect(c[0]-3,c[1]-5,6,9);}
+    });
+
+    // Enemies + boss
     var pulse=(Math.sin(Date.now()/280)+1)/2;
-    ENEMIGOS.forEach(function(z){var c=toC(z.x,z.y);if(c[0]<-5||c[0]>W+5||c[1]<-5||c[1]>H+5)return;var isJefe=z.es_jefe;var r=isJefe?9:4;ctx.beginPath();ctx.arc(c[0],c[1],r,0,Math.PI*2);ctx.fillStyle=isJefe?'#ff0000':'#ff3131';ctx.fill();if(isJefe){ctx.beginPath();ctx.arc(c[0],c[1],r+3+pulse*4,0,Math.PI*2);ctx.strokeStyle='rgba(255,0,0,'+(0.5*pulse)+')';ctx.lineWidth=2;ctx.stroke();}});
-    ctx.fillStyle='#1fff1f';ctx.beginPath();ctx.moveTo(CX,CY-8);ctx.lineTo(CX-5,CY+5);ctx.lineTo(CX+5,CY+5);ctx.closePath();ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+    ENEMIGOS.forEach(function(z){
+      var c=toC(z.x,z.y);if(!inBounds(c))return;
+      var isJ=z.es_jefe, r=isJ?9:4;
+      ctx.beginPath();ctx.arc(c[0],c[1],r,0,Math.PI*2);
+      ctx.fillStyle=isJ?'#ff0000':'#ff3131';ctx.fill();
+      if(isJ){
+        ctx.beginPath();ctx.arc(c[0],c[1],r+3+pulse*4,0,Math.PI*2);
+        ctx.strokeStyle='rgba(255,0,0,'+(0.55*pulse)+')';ctx.lineWidth=2;ctx.stroke();
+      }
+    });
+
+    // Player triangle
+    ctx.fillStyle='#1fff1f';
+    ctx.beginPath();ctx.moveTo(CX,CY-8);ctx.lineTo(CX-5,CY+5);ctx.lineTo(CX+5,CY+5);ctx.closePath();
+    ctx.fill();ctx.strokeStyle='#ffffff';ctx.lineWidth=1.5;ctx.stroke();
+
     requestAnimationFrame(draw);
   }
   draw();
 })();
 
-// POLITICAL MAP
+// ── POLITICAL MAP SIDEBAR ───────────────────────────────────
 (function(){
-  var cv=document.getElementById('politico-canvas'); if(!cv)return;
-  var ctx=cv.getContext('2d'),W=cv.width,H=cv.height,cx=W/2,cy=H/2,r=Math.min(W,H)/2-4;
-  var zones=[{color:'#2ecc71',r0:0,r1:0.14,a0:0,a1:360},{color:'#e74c3c',r0:0.14,r1:0.32,a0:0,a1:360},{color:'#f39c12',r0:0.32,r1:0.64,a0:-45,a1:45},{color:'#c0392b',r0:0.32,r1:0.64,a0:45,a1:90},{color:'#16a085',r0:0.32,r1:0.64,a0:90,a1:135},{color:'#1abc9c',r0:0.32,r1:0.64,a0:135,a1:180},{color:'#8e44ad',r0:0.32,r1:0.64,a0:180,a1:225},{color:'#7f8c8d',r0:0.32,r1:0.64,a0:225,a1:270},{color:'#27ae60',r0:0.32,r1:0.64,a0:270,a1:315},{color:'#2980b9',r0:0.64,r1:1.0,a0:0,a1:360}];
-  zones.forEach(function(z){var ri=r*z.r0,ro=r*z.r1,a0=(z.a0-90)*Math.PI/180,a1=(z.a1-90)*Math.PI/180;ctx.beginPath();if(z.a1-z.a0>=360){ctx.arc(cx,cy,ro,0,Math.PI*2);if(ri>0)ctx.arc(cx,cy,ri,Math.PI*2,0,true);}else{ctx.arc(cx,cy,ro,a0,a1);ctx.arc(cx,cy,ri,a1,a0,true);}ctx.closePath();ctx.fillStyle=z.color+'44';ctx.strokeStyle=z.color+'88';ctx.lineWidth=1;ctx.fill();ctx.stroke();});
-  ctx.strokeStyle='rgba(31,255,31,0.04)';ctx.lineWidth=1;for(var i=0;i<W;i+=14){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke();}for(var i=0;i<H;i+=14){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(W,i);ctx.stroke();}
-  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='rgba(31,255,31,0.2)';ctx.lineWidth=1.5;ctx.stroke();
-  var ms=r/110,ppx=Math.max(cx-r+6,Math.min(cx+r-6,cx+PX*ms)),ppy=Math.max(cy-r+6,Math.min(cy+r-6,cy-PY*ms));
-  ctx.beginPath();ctx.arc(ppx,ppy,5,0,Math.PI*2);ctx.fillStyle='#1fff1f';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+  var cv = document.getElementById('politico-canvas');
+  if(!cv) return;
+  cv.width  = 256;
+  cv.height = 170;
+  var ctx = cv.getContext('2d');
+  var W=256, H=170, cx=128, cy=85, r=82;
+
+  var zones=[
+    {color:'#2ecc71',r0:0,   r1:0.14,a0:0,  a1:360},
+    {color:'#e74c3c',r0:0.14,r1:0.32,a0:0,  a1:360},
+    {color:'#f39c12',r0:0.32,r1:0.64,a0:-45,a1:45 },
+    {color:'#c0392b',r0:0.32,r1:0.64,a0:45, a1:90 },
+    {color:'#16a085',r0:0.32,r1:0.64,a0:90, a1:135},
+    {color:'#1abc9c',r0:0.32,r1:0.64,a0:135,a1:180},
+    {color:'#8e44ad',r0:0.32,r1:0.64,a0:180,a1:225},
+    {color:'#7f8c8d',r0:0.32,r1:0.64,a0:225,a1:270},
+    {color:'#27ae60',r0:0.32,r1:0.64,a0:270,a1:315},
+    {color:'#2980b9',r0:0.64,r1:1.0, a0:0,  a1:360},
+  ];
+
+  // Draw static base once
+  ctx.fillStyle='#020802'; ctx.fillRect(0,0,W,H);
+  zones.forEach(function(z){
+    var ri=r*z.r0, ro=r*z.r1;
+    var a0=(z.a0-90)*Math.PI/180, a1=(z.a1-90)*Math.PI/180;
+    ctx.beginPath();
+    if(z.a1-z.a0>=360){
+      ctx.arc(cx,cy,ro,0,Math.PI*2);
+      if(ri>0)ctx.arc(cx,cy,ri,Math.PI*2,0,true);
+    } else {
+      ctx.arc(cx,cy,ro,a0,a1);
+      ctx.arc(cx,cy,ri,a1,a0,true);
+    }
+    ctx.closePath();
+    ctx.fillStyle=z.color+'44'; ctx.strokeStyle=z.color+'88';
+    ctx.lineWidth=1; ctx.fill(); ctx.stroke();
+  });
+  ctx.strokeStyle='rgba(31,255,31,0.04)'; ctx.lineWidth=1;
+  for(var i=0;i<W;i+=14){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke();}
+  for(var i=0;i<H;i+=14){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(W,i);ctx.stroke();}
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle='rgba(31,255,31,0.25)'; ctx.lineWidth=1.5; ctx.stroke();
+
+  // Save base image
+  var baseImg = ctx.getImageData(0,0,W,H);
+
+  var ms = r/110;
+  var ppx = Math.max(cx-r+6, Math.min(cx+r-6, cx+PX*ms));
+  var ppy = Math.max(cy-r+6, Math.min(cy+r-6, cy-PY*ms));
+
+  function drawPlayer(){
+    ctx.putImageData(baseImg,0,0);
+    // Player dot with pulse
+    var pg=(Math.sin(Date.now()/450)+1)/2;
+    ctx.beginPath();ctx.arc(ppx,ppy,5,0,Math.PI*2);
+    ctx.fillStyle='#1fff1f'; ctx.fill();
+    ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.beginPath();ctx.arc(ppx,ppy,8+pg*4,0,Math.PI*2);
+    ctx.strokeStyle='rgba(31,255,31,'+(0.2+0.15*pg)+')'; ctx.lineWidth=1.5; ctx.stroke();
+    requestAnimationFrame(drawPlayer);
+  }
+  drawPlayer();
 })();
 
 // ============================================================
@@ -807,31 +947,57 @@ function dinoDraw(){
   if(!dinoGame.gameOver&&!dinoGame.won) dinoGame.raf=requestAnimationFrame(dinoDraw);
 }
 
+// Confirmaciones traducidas
+var CONF_SALIR    = {{ t.get('confirm_salir','Salir de la partida?')|tojson }};
+var CONF_SUICIDIO = {{ t.get('confirm_suicidio','Seguro?')|tojson }};
+
 // KEYBOARD
 var enGanzua={{ 'true' if p.interaccion and p.interaccion.tipo in ('coche','recarga','escalar_torre') else 'false' }};
-var modoGanzua={{ "'coche'" if p.interaccion and p.interaccion.tipo=='coche' else ("'recarga'" if p.interaccion and p.interaccion.tipo=='recarga' else ("'escalar'" if p.interaccion and p.interaccion.tipo=='escalar_torre' else "'none'")) }};
-var dinoOpen=false;
+{% if p.interaccion and p.interaccion.tipo in ('coche','recarga','escalar_torre') %}
+var modoGanzua='{{ p.interaccion.tipo }}';
+{% else %}
+var modoGanzua='none';
+{% endif %}
+// modoGanzua values: 'coche' | 'recarga' | 'escalar_torre' | 'none'
+
+function getMinijuegoPrefix(modo){
+  if(modo==='recarga')     return {pfx:'rl-', route:'/recarga_input/'};
+  if(modo==='escalar_torre') return {pfx:'sc-', route:'/escalar_input/'};
+  return {pfx:'lp-', route:'/ganzua_input/'};
+}
+
 document.addEventListener('keydown',function(e){
-  if(document.getElementById('dino-modal')&&document.getElementById('dino-modal').style.display!='none'){
-    if(e.key===' '||e.key=='ArrowUp'||e.key=='w'){e.preventDefault();
-      if(dinoGame.won){ closeDino(); /* travel confirmed */ location.href='/juego'; return; }
+  // Dino modal takes priority
+  var dinoModal=document.getElementById('dino-modal');
+  if(dinoModal && dinoModal.style.display!=='none'){
+    if(e.key===' '||e.key==='ArrowUp'||e.key==='w'){
+      e.preventDefault();
+      if(dinoGame.won){ closeDino(); location.href='/juego'; return; }
       dinoJump();
     }
     return;
   }
-  if(enGanzua){
-    var gk={w:'w',a:'a',s:'s',d:'d',ArrowUp:'w',ArrowLeft:'a',ArrowDown:'s',ArrowRight:'d'};
-    if(gk[e.key]){e.preventDefault();
-      var prefix = modoGanzua==='recarga' ? 'rl-' : (modoGanzua==='escalar' ? 'sc-' : 'lp-');
-      var btn=document.getElementById(prefix+gk[e.key]);if(btn){btn.style.background='var(--green)';btn.style.color='#000';setTimeout(function(){btn.style.background='';btn.style.color='';},120);}
-      var route = modoGanzua==='recarga' ? '/recarga_input/' : (modoGanzua==='escalar' ? '/escalar_input/' : '/ganzua_input/');
-      location.href=route+gk[e.key];}
-  } else {
-    {% if not p.enemigo and not p.interaccion and not p.mercader %}
-    var m={ArrowUp:'n',ArrowDown:'s',ArrowRight:'e',ArrowLeft:'o',w:'n',s:'s',d:'e',a:'o'};
-    if(m[e.key]){e.preventDefault();location.href='/mover/'+m[e.key];}
-    {% endif %}
+
+  var gk={w:'w',a:'a',s:'s',d:'d',ArrowUp:'w',ArrowLeft:'a',ArrowDown:'s',ArrowRight:'d'};
+
+  if(enGanzua && modoGanzua!=='none'){
+    if(gk[e.key]){
+      e.preventDefault();
+      var info=getMinijuegoPrefix(modoGanzua);
+      var btn=document.getElementById(info.pfx+gk[e.key]);
+      if(btn){
+        btn.style.background='var(--green)';btn.style.color='#000';
+        setTimeout(function(){btn.style.background='';btn.style.color='';},150);
+      }
+      location.href=info.route+gk[e.key];
+    }
+    return; // don't fall through to movement
   }
+
+  {% if not p.enemigo and not p.interaccion and not p.mercader %}
+  var m={ArrowUp:'n',ArrowDown:'s',ArrowRight:'e',ArrowLeft:'o',w:'n',s:'s',d:'e',a:'o'};
+  if(m[e.key]){e.preventDefault();location.href='/mover/'+m[e.key];}
+  {% endif %}
 });
 </script>
 {% endblock %}

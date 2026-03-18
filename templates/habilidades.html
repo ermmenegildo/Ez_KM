@@ -3,20 +3,10 @@
 <div class="skills-container">
 
     <header class="hud-header">
-        <h1 class="glitch-title">// UPGRADE_TREE.EXE</h1>
-        <div class="sp-display">
-            <span class="lbl">SP DISPONIBLES:</span>
-            <span class="sp-val" style="font-size:1.3rem;"> {{ p.sp }}</span>
-        </div>
-        <a href="{{ url_for('juego') }}" class="btn-nav">[ &lt;&lt; PANEL ]</a>
+        <h1 class="glitch-title">// {{ t.get('habilidades','HABILIDADES') }}</h1>
+        <div>{{ t.get('sp','SP') }}: <span class="sp-val" style="font-size:1.2rem;">{{ p.sp }}</span></div>
+        <a href="{{ url_for('juego') }}" class="btn-nav">[ &lt;&lt; {{ t.get('volver','VOLVER') }} ]</a>
     </header>
-
-    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-        <div class="sk-badge">{{ t.get('cat_combate','COMBATE') }} <span>{{ p.get('nivel_combate',1) }}</span></div>
-        <div class="sk-badge">CRAFTEO <span>{{ p.get('nivel_crafteo',1) }}</span></div>
-        <div class="sk-badge">{{ t.get('cat_exploracion','EXPLORAC') }} <span>{{ p.get('nivel_exploracion',1) }}</span></div>
-        <div class="sk-badge">SLOTS <span>{{ p.max_inventario }}</span></div>
-    </div>
 
     {% for cat_id, cat_label, cat_color in [
         ('combate',       t.get('cat_combate','COMBATE'),      'var(--red)'),
@@ -25,38 +15,38 @@
         ('exploracion',   t.get('cat_exploracion','EXPLORAC'),  'var(--blue)')
     ] %}
     <div style="margin-bottom:14px;">
-        <div class="skill-cat-title" style="border-left:3px solid {{ cat_color }};color:{{ cat_color }};background:rgba(0,0,0,.3);padding:4px 8px;margin-bottom:8px;letter-spacing:2px;font-size:.95rem;">
+        <div style="border-left:3px solid {{ cat_color }};color:{{ cat_color }};background:rgba(0,0,0,.3);padding:4px 8px;margin-bottom:8px;letter-spacing:2px;font-size:.95rem;">
             // {{ cat_label }}
         </div>
         <div class="skills-grid">
             {% for hid, hab in habs.items() if hab.cat == cat_id %}
-            {% set tiene   = hid in p.skills %}
-            {% set req_ok  = not hab.req or hab.req in p.skills %}
+            {% set sk = p.get('skills',[]) %}
+            {% set tiene   = hid in sk %}
+            {% set req_ok  = not hab.req or hab.req in sk %}
             {% set buyable = not tiene and req_ok and p.sp >= hab.coste %}
 
             <div class="skill-card {{ 'learned' if tiene else ('locked' if not req_ok else '') }}">
                 <div class="skill-header">
-                    <span class="skill-icon" style="font-size:1.1rem;">{{ '[OK]' if tiene else '[X] ' if not req_ok else '[ ] ' }}</span>
-                    <h3 style="font-size:1rem;">{{ hab.nombre }}</h3>
-                    {% if tiene %}<span class="text-green" style="margin-left:auto;font-size:.8rem;">OK</span>{% endif %}
+                    <span style="font-size:.9rem;">{{ '[OK]' if tiene else '[X]' if not req_ok else '[ ]' }}</span>
+                    <h3 style="font-size:.95rem;flex:1;margin-left:5px;">{{ hab.nombre }}</h3>
                 </div>
                 <p class="skill-desc">{{ hab.desc }}</p>
                 {% if hab.req and not tiene %}
-                <p style="font-size:.8rem;color:var(--purple);margin-bottom:5px;">
+                <p style="font-size:.78rem;color:var(--purple);margin-bottom:5px;">
                     REQ: {{ habs[hab.req].nombre if hab.req in habs else hab.req }}
                 </p>
                 {% endif %}
-                <div class="skill-action">
+                <div style="font-size:.85rem;">
                     {% if tiene %}
-                    <span class="status-active">[ ADQUIRIDA ]</span>
+                    <span class="text-green">{{ t.get('hab_adquirida','[ ADQUIRIDA ]') }}</span>
                     {% elif buyable %}
                     <a href="{{ url_for('comprar_habilidad', hab_id=hid) }}" class="btn btn-yellow btn-sm">
-                        [ ADQUIRIR — {{ hab.coste }} SP ]
+                        {{ t.get('aprender','ADQUIRIR') }} — {{ hab.coste }} {{ t.get('sp','SP') }}
                     </a>
                     {% elif not req_ok %}
-                    <span class="status-disabled">[ REQUIERE PREREQUISITO ]</span>
+                    <span class="text-dim">{{ t.get('hab_req_prev','[ REQUIERE PREREQUISITO ]') }}</span>
                     {% else %}
-                    <span class="status-disabled">[ NECESITAS {{ hab.coste }} SP ]</span>
+                    <span class="text-dim">{{ t.get('hab_necesitas_sp','NECESITAS') }} {{ hab.coste }} SP</span>
                     {% endif %}
                 </div>
             </div>
@@ -65,29 +55,21 @@
     </div>
     {% endfor %}
 
-    <div class="skill-footer">
-        <p class="sys-note">&gt;&gt; MODIFICACIONES PERMANENTES.</p>
-        <a href="{{ url_for('juego') }}" class="btn-execute">[ &lt;&lt; VOLVER AL PANEL ]</a>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:8px;padding-bottom:10px;">
+        <p style="font-size:.85rem;color:rgba(31,255,31,.3);">&gt;&gt; {{ t.get('protocolo_abortado','MODIFICACIONES PERMANENTES') }}</p>
+        <a href="{{ url_for('juego') }}" class="btn-execute">[ &lt;&lt; {{ t.get('volver','VOLVER') }} ]</a>
     </div>
 
 </div>
 
 <style>
-.skills-container { max-width:900px; margin:0 auto; }
-.sp-display .lbl { color:rgba(31,255,31,.45); }
-.skills-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; }
-.skill-card { border:1px solid var(--border); background:rgba(0,5,0,.4); padding:9px; }
-.skill-card.learned { border-color:rgba(31,255,31,.35); background:rgba(31,255,31,.04); }
-.skill-card.locked  { opacity:.38; }
-.skill-header { display:flex; align-items:center; gap:6px; margin-bottom:4px; }
-.skill-icon   { font-size:.9rem; }
-.skill-header h3 { font-size:.95rem; flex:1; }
-.skill-desc   { font-size:.8rem; color:rgba(31,255,31,.45); margin-bottom:6px; }
-.skill-action { font-size:.85rem; }
-.skill-footer { margin-top:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
-.sys-note     { font-size:.85rem; color:rgba(31,255,31,.3); }
-.sk-badge     { background:rgba(0,10,0,.4); border:1px solid var(--border); padding:2px 8px; font-size:.85rem; }
-.sk-badge span { color:var(--yellow); }
-@media(max-width:600px){ .skills-grid{grid-template-columns:1fr 1fr;} }
+.skills-container{max-width:900px;margin:0 auto;}
+.skills-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;}
+.skill-card{border:1px solid var(--border);background:rgba(0,5,0,.4);padding:9px;}
+.skill-card.learned{border-color:rgba(31,255,31,.35);background:rgba(31,255,31,.04);}
+.skill-card.locked{opacity:.38;}
+.skill-header{display:flex;align-items:center;gap:4px;margin-bottom:4px;}
+.skill-desc{font-size:.78rem;color:rgba(31,255,31,.45);margin-bottom:6px;}
+@media(max-width:600px){.skills-grid{grid-template-columns:1fr 1fr;}}
 </style>
 {% endblock %}

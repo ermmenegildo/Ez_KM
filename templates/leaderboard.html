@@ -1,14 +1,14 @@
 {% extends "layout.html" %}
 {% block content %}
-<div style="max-width:800px;margin:0 auto;">
+<div style="max-width:820px;margin:0 auto;">
 
     <header class="hud-header">
-        <h1 class="glitch-title">&gt;&gt; ARCHIVOS_SUPERVIVENCIA.LOG</h1>
-        <a href="{{ url_for('index') }}" class="btn-nav">[ &lt;&lt; VOLVER ]</a>
+        <h1 class="glitch-title">&gt;&gt; {{ t.get('archivos_titulo','ARCHIVOS DE SUPERVIVENCIA') }}</h1>
+        <a href="{{ url_for('index') }}" class="btn-nav">[ &lt;&lt; {{ t.get('volver','VOLVER') }} ]</a>
     </header>
 
     <p class="text-dim" style="margin-bottom:12px;font-size:.9rem;">
-        Registros de los supervivientes del Sector C-7. Ordenados por dias sobrevividos.
+        {{ t.get('archivos_sub','Registros del Sector C-7. Ordenados por dias sobrevividos.') }}
     </p>
 
     <div class="log-container">
@@ -17,12 +17,12 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>NOMBRE</th>
-                    <th>G/E</th>
-                    <th>DIAS</th>
+                    <th>{{ t.get('nombre_col','NOMBRE') }}</th>
+                    <th>{{ t.get('genero','G') }}/{{ t.get('edad','E') }}</th>
+                    <th>{{ t.get('dias_col','DIAS') }}</th>
                     <th>LVL</th>
-                    <th>TIEMPO</th>
-                    <th>ESCAPE</th>
+                    <th>{{ t.get('tiempo_col','TIEMPO') }}</th>
+                    <th>{{ t.get('escape_col','ESCAPE') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -34,21 +34,19 @@
                     <td class="text-yellow">{{ s.dias }}</td>
                     <td>LVL {{ s.lvl }}</td>
                     <td class="text-dim" style="font-size:.8rem;">
-                        {% set seg = s.get('tiempo_seg', 0) %}
-                        {% set hh = (seg // 3600) %}
-                        {% set mm = ((seg % 3600) // 60) %}
-                        {% set ss = (seg % 60) %}
+                        {% set seg=s.get('tiempo_seg',0) %}
+                        {% set hh=(seg//3600) %}{% set mm=((seg%3600)//60) %}{% set ss=(seg%60) %}
                         {{ '%02d:%02d:%02d'|format(hh,mm,ss) }}
                     </td>
                     <td class="{{ 'text-green' if s.get('forma_escape') not in ('Muerte','',None) else 'text-red' }}" style="font-size:.85rem;">
-                        {{ s.get('forma_escape','Muerte') }}
+                        {{ s.get('forma_escape', t.get('bandido','Muerte')) }}
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         {% else %}
-        <p class="text-red">[!] SIN REGISTROS EN EL NUCLEO DE DATOS.</p>
+        <p class="text-red">{{ t.get('sin_registros','[!] Sin registros en el nucleo de datos.') }}</p>
         {% endif %}
     </div>
 
