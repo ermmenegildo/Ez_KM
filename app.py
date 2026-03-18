@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, session, redirect, url_for, j
 from traducciones import TEXTOS
 from app_data import (CLASES, OBJETOS, ITEMS_CURATIVOS, RECETAS_BASE, RECETAS_BIBLIOTECA,
                       TIPOS_MUNICION, CARGADOR, DROPS_JEFE, DROPS_BANDIDO,
-                      PIEZAS_BARCO, COMBUSTIBLE_COCHE)
+                      PIEZAS_BARCO, COMBUSTIBLE_COCHE, RECETAS_DESC)
 import random, math, json, os, sqlite3, re, html, time
 
 app = Flask(__name__)
@@ -530,7 +530,7 @@ def spawn_bandido(p):
     return {'nombre':random.choice(nombres),'tipo':'bandido','hp':hp,'hp_max':hp,
             'atk':atk,'xp':60+lvl*5,'color':'#ff6600','ef':None,'inf':0.0}
 
-def _juego_vars(p):
+def _juego_vars(p, lang='es'):
     d=obtener_distrito(p['x'],p['y']); rx,ry=get_refugio(p['x'],p['y'])
     recetas_disponibles = dict(RECETAS_BASE)
     for rid, rec in RECETAS_BIBLIOTECA.items():
@@ -545,6 +545,7 @@ def _juego_vars(p):
         zonas_seguras=ZONAS_SEGURAS, recetas=recetas_disponibles,
         enfermedades=ENFERMEDADES, locs=LOCS_ESPECIALES,
         npcs=get_npcs_en_zona(p),
+        recetas_desc=RECETAS_DESC.get(lang, RECETAS_DESC['es']),
     )
 
 def tick_infeccion(p, pasos=1):
@@ -576,7 +577,9 @@ def aplicar_mordisco(p, zombi):
         return "MORDISCO INFECTADO." if p['infeccion']==1 else f"Mordisco +5% ({int(p['infeccion'])}%)"
     return None
 
-def generar_evento(p):
+def generar_evento(p, lang='es'):
+    from traducciones import TEXTOS
+    _t = TEXTOS.get(lang, TEXTOS['es'])
     dist=obtener_distrito(p['x'],p['y']); peligro=DISTRITOS.get(dist,{}).get('peligro',1)
     pool=[('superviviente',max(1,6-peligro)),('cadaver',2+peligro),('radio',2),('lluvia',2),('explosion',2)]
     if peligro>=2: pool+=[('trampa',3),('manada',peligro),('bandido',peligro)]
@@ -584,24 +587,24 @@ def generar_evento(p):
     tipo=random.choices([x[0] for x in pool],weights=[x[1] for x in pool])[0]
     if tipo=='superviviente':
         n=random.choice(NOMBRES_SUPERV); r=random.choice(RECOMPENSAS_SUPERV); ep=random.random()<0.5
-        return {'tipo':'superviviente','nombre':n,'recompensa':r,'en_peligro':ep,'msj':f"{n} esta acorralado." if ep else f"{n} te observa."}
+        return {'tipo':'superviviente','nombre':n,'recompensa':r,'en_peligro':ep,'msj':_t.get('superviviente_acorralado','{nombre} esta acorralado.').replace('{nombre}',n) if ep else _t.get('superviviente_observa','{nombre} te observa.').replace('{nombre}',n)}
     elif tipo=='cadaver':
         loot=random.sample(LOOT_CADAVER,k=random.randint(1,2))
-        return {'tipo':'cadaver','loot':loot,'msj':"Un cadaver reciente bloquea el camino."}
+        return {'tipo':'cadaver','loot':loot,'msj':_t.get('cadaver_msj','Un cadaver reciente bloquea el camino.')}
     elif tipo=='trampa':
-        d=random.randint(8,20); return {'tipo':'trampa','dano':d,'msj':f"Trampa de cables. -{d}HP."}
+        d=random.randint(8,20); return {'tipo':'trampa','dano':d,'msj':_t.get('trampa_msj','Trampa de cables.') + f' -{d}HP.'}
     elif tipo=='radio':
         msgs=["'...sector 7... supervivientes...'","'PROTOCOLO OMEGA. EVACUACION CANCELADA.'","'...vacuna... laboratorio...'","'...papa no vuelve...'"]
         return {'tipo':'radio','msj':random.choice(msgs)}
     elif tipo=='lluvia':
-        d=random.randint(3,10); return {'tipo':'lluvia','dano':d,'msj':f"Lluvia acida. -{d}HP."}
+        d=random.randint(3,10); return {'tipo':'lluvia','dano':d,'msj':_t.get('lluvia_msj','Lluvia acida.') + f' -{d}HP.'}
     elif tipo=='manada':
-        n=random.randint(2,4); return {'tipo':'manada','n_zombis':n,'msj':f"Manada de {n} zombis."}
+        n=random.randint(2,4); return {'tipo':'manada','n_zombis':n,'msj':_t.get('manada_msj','Manada de {n} zombis.').replace('{n}',str(n))}
     elif tipo=='explosion':
-        return {'tipo':'explosion','msj':"Explosion lejana. El suelo tiembla."}
+        return {'tipo':'explosion','msj':_t.get('explosion_msj','Explosion lejana. El suelo tiembla.')}
     elif tipo=='planta':
         it=random.choice(['Venda','Agua Purificada','Antibioticos'])
-        return {'tipo':'planta','item':it,'msj':f"Planta medicinal: {it}."}
+        return {'tipo':'planta','item':it,'msj':_t.get('planta_msj','Planta medicinal: {item}.').replace('{item}',it)}
     elif tipo=='bandido':
         b=spawn_bandido(p); b['_es_bandido']=True
         return {'tipo':'bandido','bandido':b,'msj':f"{b['nombre']} aparece con un arma."}
@@ -614,7 +617,7 @@ def _dar_recompensa_superv(p,inter):
     if 'carisma' in p.get('skills',[]):
         b=random.choice(['Lata de comida','Trapo','Alcohol','Vial de Retencion'])
         if add_item(p,b): dados.append(b)
-    p['log']=f"{inter.get('nombre','Superv.')} recompensa: {', '.join(dados) if dados else 'mochila llena'}."
+    p['log']=f"{inter.get('nombre','Superv.')} recompensa: {', '.join(dados) if dados else '__mochila_llena__'}."
     p['exp']=p.get('exp',0)+20
     if p['exp']>=100:
         p['lvl']+=1; p['exp']%=100; p['sp']+=1; p['max_hp']+=10; p['hp']=p['max_hp']
@@ -699,7 +702,7 @@ def iniciar():
         'enemigos_mapa':[{'x':random.randint(-15,15),'y':random.randint(-15,15)} for _ in range(5)],
         'jefe_spawn':False,
         'tiempo_inicio': int(time.time()),
-        'log':"Sistemas listos. Protocolo C.R.T. activo.",
+        'log':'__startup__',
     }
     # Equipar arma inicial si corresponde
     if item in OBJETOS:
@@ -713,7 +716,7 @@ def juego():
     lang=session.get('lang','es'); t_idioma=TEXTOS.get(lang,TEXTOS['es'])
     p['muertes_mapa']=_cargar_muertes()
     _backfill(p); session.modified=True
-    return render_template('juego.html',p=p,t=t_idioma,**_juego_vars(p))
+    return render_template('juego.html',p=p,t=t_idioma,**_juego_vars(p,lang))
 
 def _backfill(p):
     p.setdefault('equipo',{'cabeza':None,'torso':None,'mano_der':None,'espalda':None,'pies':None})
@@ -726,6 +729,11 @@ def _backfill(p):
     p.setdefault('gasolina_coche',0); p.setdefault('forma_escape','')
     p.setdefault('campamento',None); p.setdefault('planos_encontrados',[])
     p.setdefault('jefe_spawn',False); p.setdefault('tiempo_inicio',int(time.time()))
+    p.setdefault('skills',[]); p.setdefault('estados',[]); p.setdefault('sp',0)
+    p.setdefault('dmg_base',10); p.setdefault('mordida_prot',0.0)
+    p.setdefault('pasos',0); p.setdefault('ciclo_pasos',0); p.setdefault('dias',0)
+    p.setdefault('max_inventario',5); p.setdefault('inventario',[])
+    p.setdefault('mercader',None); p.setdefault('enemigo',None); p.setdefault('interaccion',None)
     for ed in p.get('edificios_mapa',[]): ed.setdefault('saqueado',False)
     for c in p.get('coches_mapa',[]): c.setdefault('forzado',False)
 
@@ -785,7 +793,7 @@ def mover(dir):
         if DISTRITOS.get(dist,{}).get('peligro',0)>=3:
             ox=random.choice([-8,-5,5,8]); oy=random.choice([-8,-5,5,8])
             p['enemigos_mapa'].append({'x':p['x']+ox,'y':p['y']+oy,'es_jefe':True})
-            p['log']="ALERTA: Señal biologica CRITICA detectada en el area."; p['jefe_spawn']=True
+            p['log']="__alerta_jefe__"; p['jefe_spawn']=True
 
     ddet=3 if 'sigilo' in p.get('skills',[]) else 6
     for z in list(p['enemigos_mapa']):
@@ -827,7 +835,7 @@ def mover(dir):
 
     # Mercaderes tipo
     if p['pasos']%8==0 and not es_zona_segura(p['x'],p['y']):
-        ev=generar_evento(p)
+        ev=generar_evento(p, session.get('lang','es'))
         if ev:
             if ev['tipo']=='lluvia': p['hp']=max(1,p['hp']-ev['dano']); p['log']=ev['msj']
             elif ev['tipo'] in ('explosion','radio'): p['log']=ev['msj']
@@ -863,10 +871,10 @@ def dormir():
     p=session.get('p')
     if not p: return redirect(url_for('juego'))
     if p.get('enemigo') or p.get('interaccion') or p.get('mercader'):
-        p['log']="No puedes dormir con amenazas activas."; session.modified=True; return redirect(url_for('juego'))
+        p['log']="__no_dormir_amenazas__"; session.modified=True; return redirect(url_for('juego'))
     es_noche=p['ciclo_pasos']>=100
     if not es_noche and not es_zona_segura(p['x'],p['y']):
-        p['log']="Solo puedes dormir de noche o en zona segura."; session.modified=True; return redirect(url_for('juego'))
+        p['log']="__no_dormir_dia__"; session.modified=True; return redirect(url_for('juego'))
     pasos_salto=max(10,min(180-p['ciclo_pasos'],180))
     p['ciclo_pasos']=0; p['dias']+=1; p['pasos']+=pasos_salto
     regen=int(p['max_hp']*0.25); p['hp']=min(p['max_hp'],p['hp']+regen)
@@ -884,7 +892,7 @@ def recargar():
     if not p: return redirect(url_for('juego'))
     arma=p.get('equipo',{}).get('mano_der','')
     if arma not in CARGADOR:
-        p['log']="Esta arma no necesita recarga."; session.modified=True; return redirect(url_for('juego'))
+        p['log']="__arma_no_recarga__"; session.modified=True; return redirect(url_for('juego'))
     ammo_type=OBJETOS[arma].get('ammo_type')
     if ammo_type in p.get('inventario',[]):
         p['inventario'].remove(ammo_type)
@@ -945,7 +953,7 @@ def atacar(parte='torso'):
         ev=p.get('evasion',0.0)
         if 'esquivar' in p.get('skills',[]): ev=max(ev,0.15)
         if enemigo.get('ef')=='evasion': ev=max(ev,0.25)
-        if random.random()<ev: logs.append("Esquivaste!")
+        if random.random()<ev: logs.append("__esquivaste__")
         else:
             dr=max(1,enemigo['atk']-p.get('defensa',0)); p['hp']-=dr; logs.append(f"{enemigo['nombre']}: -{dr}HP")
             inf_msg=aplicar_mordisco(p,enemigo)
@@ -1029,7 +1037,7 @@ def desequipar(slot):
     item=p['equipo'].get(slot)
     if item and len(p.get('inventario',[]))<p.get('max_inventario',5):
         p['inventario'].append(item); p['equipo'][slot]=None; recalcular_stats(p); p['log']=f"{item} desequipado."
-    elif item: p['log']="Inventario lleno."
+    elif item: p['log']="__inv_lleno__"
     session.modified=True; return redirect(url_for('juego'))
 
 # --- CRAFTEO ---
@@ -1040,7 +1048,7 @@ def craftear(receta_id):
     from app_data import RECETAS_BASE, RECETAS_BIBLIOTECA
     todas={**RECETAS_BASE, **RECETAS_BIBLIOTECA}
     rec=todas.get(receta_id)
-    if not rec: p['log']="Receta desconocida."; session.modified=True; return redirect(url_for('juego'))
+    if not rec: p['log']="__receta_desconocida__"; session.modified=True; return redirect(url_for('juego'))
     if rec.get('requiere_campamento') and not p.get('campamento'):
         p['log']="Necesitas un campamento para esto."; session.modified=True; return redirect(url_for('juego'))
     inv=list(p['inventario'])
@@ -1053,7 +1061,7 @@ def craftear(receta_id):
     if add_item(p,receta_id):
         p['log']=f"Crafteado: {receta_id}! +{rec.get('xp',10)}XP"
         p['exp']=p.get('exp',0)+rec.get('xp',10)
-    else: p['log']="Inventario lleno."
+    else: p['log']="__inv_lleno__"
     session.modified=True; return redirect(url_for('juego'))
 
 # --- EDIFICIOS ---
@@ -1077,7 +1085,7 @@ def entrar_edificio():
 @app.route('/ignorar_edificio')
 def ignorar_edificio():
     p=session.get('p')
-    if p: p['interaccion']=None; p['log']="Edificio ignorado."
+    if p: p['interaccion']=None; p['log']="__edificio_ignorado__"
     session.modified=True; return redirect(url_for('juego'))
 
 # --- LOCALIZACIONES ESPECIALES ---
@@ -1126,7 +1134,7 @@ def entrar_loc_especial():
             n=len(p['generadores_activos'])
             p['log']=f"Generador activado. ({n}/5) {'TODOS LOS GENERADORES ACTIVOS!' if n>=5 else ''}"
         else:
-            p['log']="Este generador ya esta activo."
+            p['log']="__gen_ya_activo__"
         p['interaccion']=None; session.modified=True; return redirect(url_for('juego'))
 
     elif lid=='coche_escape':
@@ -1173,7 +1181,7 @@ def entrar_loc_especial():
 @app.route('/ignorar_loc_especial')
 def ignorar_loc_especial():
     p=session.get('p')
-    if p: p['interaccion']=None; p['log']="Te alejas."
+    if p: p['interaccion']=None; p['log']="__te_alejas__"
     session.modified=True; return redirect(url_for('juego'))
 
 # --- GANZÚA ---
@@ -1199,7 +1207,7 @@ def ganzua_input(tecla):
     else:
         inter['intentos']=inter.get('intentos',0)+1; inter['progreso']=[]
         if inter['intentos']>=inter.get('max_intentos',3):
-            p['log']="Ganzua rota."
+            p['log']="__ganzua_rota__"
             for c in p['coches_mapa']:
                 if c.get('x')==inter.get('c_x') and c.get('y')==inter.get('c_y'): c['forzado']=True
             p['interaccion']=None
@@ -1210,7 +1218,7 @@ def ganzua_input(tecla):
 @app.route('/ignorar_coche')
 def ignorar_coche():
     p=session.get('p')
-    if p: p['interaccion']=None; p['log']="Coche ignorado."
+    if p: p['interaccion']=None; p['log']="__coche_ignorado__"
     session.modified=True; return redirect(url_for('juego'))
 
 # --- SUPERVIVIENTES ---
@@ -1239,25 +1247,25 @@ def registrar_cadaver():
     inter=p['interaccion']; dados=[]
     for it in inter.get('loot',[]): 
         if add_item(p,it): dados.append(it)
-    p['log']=f"Cadaver: {', '.join(dados) if dados else 'nada util'}."; p['interaccion']=None
+    p['log']=f"Cadaver: {', '.join(dados) if dados else '__nada_util__'}."; p['interaccion']=None
     session.modified=True; return redirect(url_for('juego'))
 
 @app.route('/ignorar_cadaver')
 def ignorar_cadaver():
     p=session.get('p')
-    if p: p['interaccion']=None; p['log']="Rodeas el cadaver."
+    if p: p['interaccion']=None; p['log']="__rodeas_cadaver__"
     session.modified=True; return redirect(url_for('juego'))
 
 @app.route('/evitar_trampa')
 def evitar_trampa():
     p=session.get('p')
-    if p: p['interaccion']=None; p['log']="Rodeas la trampa."
+    if p: p['interaccion']=None; p['log']="__rodeas_trampa__"
     session.modified=True; return redirect(url_for('juego'))
 
 @app.route('/ignorar_interaccion')
 def ignorar_interaccion():
     p=session.get('p')
-    if p: p['interaccion']=None; p['log']="Sigues adelante."
+    if p: p['interaccion']=None; p['log']="__sigues_adelante__"
     session.modified=True; return redirect(url_for('juego'))
 
 # --- MERCADER ---
@@ -1270,8 +1278,8 @@ def comprar_mercader(item):
         if add_item(p,item):
             p['dinero']-=precio; p['mercader']['items'].remove(item)
             p['log']=f"Comprado: {item} por {precio}CC"
-        else: p['log']="Inventario lleno."
-    else: p['log']="Creditos insuficientes."
+        else: p['log']="__inv_lleno__"
+    else: p['log']="__cred_insuf__"
     session.modified=True; return redirect(url_for('juego'))
 
 @app.route('/cerrar_mercader')
@@ -1286,13 +1294,13 @@ def construir_campamento():
     p=session.get('p')
     if not p: return redirect(url_for('juego'))
     if 'campista' not in p.get('skills',[]):
-        p['log']="Necesitas la habilidad Campista."; session.modified=True; return redirect(url_for('juego'))
+        p['log']="__necesitas_campista__"; session.modified=True; return redirect(url_for('juego'))
     materiales=['Palo','Palo','Trapo','Cuerda']
     for m in materiales:
         if m not in p.get('inventario',[]): p['log']=f"Necesitas: {', '.join(materiales)}."; session.modified=True; return redirect(url_for('juego'))
     for m in materiales: p['inventario'].remove(m)
     p['campamento']={'x':p['x'],'y':p['y'],'granja':False}
-    p['log']="Campamento construido en esta posicion. Puedes dormir y cocinar aqui."
+    p['log']="__campamento_construido__"
     session.modified=True; return redirect(url_for('juego'))
 
 # --- MAPA ---
@@ -1303,6 +1311,7 @@ def mapa():
     lang=session.get('lang','es'); t_idioma=TEXTOS.get(lang,TEXTOS['es'])
     rx,ry=get_refugio(p['x'],p['y']); dist_ref=int(math.sqrt((p['x']-rx)**2+(p['y']-ry)**2))
     d=obtener_distrito(p['x'],p['y']); p['muertes_mapa']=_cargar_muertes()
+    lang_mapa=session.get('lang','es')
     recetas_disp = dict(RECETAS_BASE)
     for rid, rec in RECETAS_BIBLIOTECA.items():
         if rec['plano'] in p.get('inventario',[]) or rec['plano'] in p.get('planos_encontrados',[]):
@@ -1310,7 +1319,8 @@ def mapa():
     return render_template('mapa.html',p=p,t=t_idioma,distrito=d,info_distrito=DISTRITOS.get(d,{}),
         es_noche=(p['ciclo_pasos']>=100),rx=rx,ry=ry,dist_refugio=dist_ref,
         distritos=DISTRITOS,zonas_seguras=ZONAS_SEGURAS,locs=LOCS_ESPECIALES,
-        recetas=recetas_disp,enfermedades=ENFERMEDADES,npcs=get_npcs_en_zona(p))
+        recetas=recetas_disp,enfermedades=ENFERMEDADES,npcs=get_npcs_en_zona(p),
+        recetas_desc=RECETAS_DESC.get(lang_mapa, RECETAS_DESC['es']))
 
 # --- ESCAPE ---
 @app.route('/escapar/<metodo>')
@@ -1351,14 +1361,14 @@ def iniciar_recarga():
     if not p: return redirect(url_for('juego'))
     arma = p.get('equipo', {}).get('mano_der', '')
     if arma not in CARGADOR:
-        p['log'] = "Esta arma no usa municion."; session.modified = True; return redirect(url_for('juego'))
+        p['log'] = "__arma_no_municion__"; session.modified = True; return redirect(url_for('juego'))
     from app_data import TIPOS_MUNICION
     ammo_type = None
     for at, info in TIPOS_MUNICION.items():
         if arma in info['armas']:
             ammo_type = at; break
     if not ammo_type:
-        p['log'] = "Sin tipo de municion definido."; session.modified = True; return redirect(url_for('juego'))
+        p['log'] = "__sin_tipo_municion__"; session.modified = True; return redirect(url_for('juego'))
     if ammo_type not in p.get('inventario', []):
         p['log'] = f"Sin {ammo_type} en mochila."; session.modified = True; return redirect(url_for('juego'))
     # Generar secuencia de recarga (3-4 teclas)
@@ -1420,7 +1430,7 @@ def escalar_torre():
     if not p: return redirect(url_for('juego'))
     # Requiere Cuerda en inventario o habilidad
     if 'Cuerda' not in p.get('inventario', []):
-        p['log'] = "Necesitas Cuerda para escalar la torre."; session.modified = True; return redirect(url_for('juego'))
+        p['log'] = "__necesitas_cuerda__"; session.modified = True; return redirect(url_for('juego'))
     # Activar minijuego de escalada
     p['interaccion'] = {
         'tipo': 'escalar_torre',
@@ -1528,7 +1538,7 @@ def entrar_habitacion(idx):
         for _ in range(random.randint(1, 3)):
             it = random.choice(loot_pool)
             if add_item(p, it): found.append(it)
-        p['log'] = f"{hab['nombre']}: {', '.join(found) if found else 'nada util'}."
+        p['log'] = f"{hab['nombre']}: {', '.join(found) if found else '__nada_util__'}."
     session.modified = True; return redirect(url_for('juego'))
 
 @app.route('/salir_interior')
@@ -1540,7 +1550,7 @@ def salir_interior():
         for ed in p.get('edificios_mapa', []):
             if ed.get('x') == inter.get('ed_x') and ed.get('y') == inter.get('ed_y'):
                 ed['saqueado'] = True
-        p['interaccion'] = None; p['log'] = "Sales del edificio."
+        p['interaccion'] = None; p['log'] = "__sales_edificio__"
     session.modified = True; return redirect(url_for('juego'))
 
 # ============================================================
@@ -1633,11 +1643,11 @@ def construir_granja():
     p = session.get('p')
     if not p: return redirect(url_for('juego'))
     if not p.get('campamento'):
-        p['log'] = "Necesitas un campamento primero."; session.modified = True; return redirect(url_for('juego'))
+        p['log'] = "__necesitas_campamento__"; session.modified = True; return redirect(url_for('juego'))
     if 'agricultura' not in p.get('skills', []):
-        p['log'] = "Necesitas la habilidad Botanico."; session.modified = True; return redirect(url_for('juego'))
+        p['log'] = "__necesitas_botanico__"; session.modified = True; return redirect(url_for('juego'))
     if p['campamento'].get('granja'):
-        p['log'] = "Ya tienes granja en el campamento."; session.modified = True; return redirect(url_for('juego'))
+        p['log'] = "__ya_tienes_granja__"; session.modified = True; return redirect(url_for('juego'))
     mats = ['Palo', 'Palo', 'Trapo', 'Agua sucia']
     for m in mats:
         if m not in p.get('inventario', []):
@@ -1654,7 +1664,7 @@ def cosechar_granja():
     if not p: return redirect(url_for('juego'))
     camp = p.get('campamento', {})
     if not camp or not camp.get('granja'):
-        p['log'] = "Sin granja."; session.modified = True; return redirect(url_for('juego'))
+        p['log'] = "__sin_granja__"; session.modified = True; return redirect(url_for('juego'))
     pasos_desde = p['pasos'] - camp.get('granja_pasos', 0)
     if pasos_desde < 40:
         p['log'] = f"La granja no esta lista. {40-pasos_desde} pasos mas."; session.modified = True; return redirect(url_for('juego'))
@@ -1664,9 +1674,8 @@ def cosechar_granja():
     for _ in range(n):
         if add_item(p, cosecha): added.append(cosecha)
     camp['granja_pasos'] = p['pasos']
-    p['log'] = f"Cosecha: {', '.join(added) if added else 'mochila llena'}."
+    p['log'] = f"Cosecha: {', '.join(added) if added else '__mochila_llena__'}."
     session.modified = True; return redirect(url_for('juego'))
 
-if __name__ == '__main__':
-    init_db()
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000)
