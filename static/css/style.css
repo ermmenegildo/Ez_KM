@@ -97,27 +97,25 @@ body {
 
 /* ===== FOOTER ===== */
 .site-footer {
-    width: 98vw;
-    max-width: 1400px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 6px;
+    width: 98vw; max-width: 1400px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 6px;
     padding: 6px 16px;
-    background: rgba(0,4,0,.8);
+    background: rgba(0,4,0,.85);
     border-top: 1px solid var(--border);
     font-size: .75rem;
 }
-.footer-logos { display:flex; align-items:center; gap:10px; }
-.footer-logo { height:26px; width:auto; opacity:.65; transition:opacity .2s; filter:brightness(1.2); }
-.footer-logo:hover { opacity:1; }
-.footer-contact { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-.footer-label { color:rgba(31,255,31,.35); }
-.footer-link { color:rgba(31,255,31,.55); text-decoration:none; transition:color .15s; }
-.footer-link:hover { color:var(--green); }
-.footer-sep { color:var(--border); }
-.footer-ver { color:rgba(31,255,31,.2); font-size:.7rem; }
+.sf-logos { display:flex; align-items:center; gap:12px; }
+.sf-logo  { height:24px; width:auto; opacity:.65; transition:opacity .2s; filter:brightness(1.3); }
+.sf-logo-dina { height:15px; }
+.sf-logo:hover { opacity:1; }
+.sf-info  { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.sf-item  { color:rgba(31,255,31,.45); }
+.sf-sep   { color:var(--border); }
+.sf-cc    { color:rgba(31,255,31,.3); }
+.sf-link  { color:rgba(31,255,31,.55)!important; text-decoration:none; transition:color .15s; }
+.sf-link:hover { color:var(--green)!important; }
+.sf-ver   { color:rgba(31,255,31,.2); font-size:.7rem; }
 
 /* ===== GLOBAL BUTTONS ===== */
 a { text-decoration:none; }
@@ -176,7 +174,14 @@ a { text-decoration:none; }
 
 /* ===== GAME LAYOUT ===== */
 .game-layout { display:grid; grid-template-columns:1fr 274px; gap:10px; align-items:start; }
-.main-view { display:flex; flex-direction:column; gap:6px; overflow-y:auto; max-height:calc(90vh - 60px); padding-right:3px; }
+.main-view {
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    overflow-y:auto;
+    max-height:calc(90vh - 60px);
+    padding-right:3px;
+}
 .main-view::-webkit-scrollbar { width:3px; }
 .main-view::-webkit-scrollbar-thumb { background:#1a3a1a; }
 .status-sidebar { display:flex; flex-direction:column; gap:8px; border-left:1px solid var(--border); padding-left:10px; overflow-y:auto; max-height:calc(90vh - 60px); }
@@ -214,7 +219,15 @@ a { text-decoration:none; }
 @keyframes blink-txt { 0%,100%{opacity:1} 50%{opacity:.35} }
 
 /* ===== COMPASS ===== */
-.compass-area { background:var(--panel); border:1px solid var(--border); padding:10px; display:flex; flex-direction:column; align-items:center; min-height:100px; }
+.compass-area {
+    background:var(--panel);
+    border:1px solid var(--border);
+    padding:10px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+}
 .compass { display:grid; grid-template-areas:". n ." "o c e" ". s ."; gap:8px; align-items:center; }
 .north{grid-area:n} .south{grid-area:s} .east{grid-area:e} .west{grid-area:o}
 .nav-btn { width:48px; height:48px; line-height:48px; text-align:center; padding:0; font-size:1.5rem; }
@@ -283,7 +296,13 @@ a { text-decoration:none; }
 .lp-btn     { width:48px; height:48px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; font-weight:bold; padding:0; border-width:2px; }
 
 /* ===== TABS ===== */
-.tabs-section { background:var(--panel); border:1px solid var(--border); padding:9px; }
+.tabs-section {
+    background:var(--panel);
+    border:1px solid var(--border);
+    padding:9px;
+    /* Clear separation from compass */
+    border-top:2px solid rgba(31,255,31,0.25);
+}
 .tab-bar { display:flex; gap:3px; margin-bottom:7px; flex-wrap:wrap; border-bottom:1px solid var(--border); padding-bottom:6px; }
 .tab-btn { background:transparent; border:1px solid rgba(31,255,31,.2); color:rgba(31,255,31,.4); padding:3px 9px; cursor:pointer; font-family:var(--font); font-size:.9rem; letter-spacing:1px; text-transform:uppercase; transition:all .12s; }
 .tab-btn:hover  { color:var(--green); border-color:rgba(31,255,31,.5); }
@@ -388,7 +407,7 @@ a { text-decoration:none; }
 .status-bad  { font-size:.85rem; color:var(--red); text-shadow:0 0 5px var(--red-glow); }
 
 /* ===== RADAR/MAP ===== */
-.radar-wrap { position:relative; overflow:hidden; border:1px solid rgba(31,255,31,.15); }
+.radar-wrap { position:relative; overflow:hidden; border:1px solid rgba(31,255,31,.15); line-height:0; }
 .scan-line  { position:absolute; width:100%; height:2px; background:rgba(31,255,31,.4); box-shadow:0 0 7px var(--green-glow); animation:scan 3s linear infinite; z-index:5; pointer-events:none; }
 @keyframes scan { 0%{top:0} 100%{top:100%} }
 canvas { display:block; }
@@ -461,7 +480,12 @@ option { background:#000; color:var(--green); }
 .npc-panel { display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin-top:5px; padding-top:5px; border-top:1px solid var(--border); }
 
 /* ===== CAMPAMENTO PANEL ===== */
-.camp-panel { display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-top:5px; padding:5px 8px; background:rgba(0,20,0,.3); border:1px solid rgba(31,255,31,.2); border-radius:1px; }
+.camp-panel {
+    display:flex; align-items:center; flex-wrap:wrap; gap:6px;
+    padding:4px 8px; background:rgba(0,20,0,.3);
+    border:1px solid rgba(31,255,31,.2); border-radius:1px;
+    width:100%; box-sizing:border-box;
+}
 
 /* ===== ESCAPE PROGRESS ===== */
 .escape-progress { background:rgba(0,20,0,.4); border:1px solid rgba(0,255,136,.25); padding:6px 10px; margin-top:4px; }
@@ -510,9 +534,12 @@ option { background:#000; color:var(--green); }
 }
 .map-canvas-wrap canvas {
     display: block;
-    width: 100% !important;
-    height: 100% !important;
+    /* Only fill the map page wrappers, not game sidebar canvases */
+    width: 100%;
+    height: 100%;
 }
+/* Sidebar canvases — size set by JS cv.width/cv.height */
+#radar-canvas, #politico-canvas { display:block; }
 .map-scan {
     position: absolute; width: 100%; height: 2px;
     background: rgba(31,255,31,.4);
